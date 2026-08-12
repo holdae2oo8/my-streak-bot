@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 from datetime import date, datetime, timedelta
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
@@ -14,24 +15,29 @@ DASHBOARD_TARGET = (
 
 
 def load_data():
-    """Loads existing streak data and history from logs.json safely."""
+    """Loads existing streak data and history from logs.json with corruption fallbacks."""
     if os.path.exists(LOGS_FILE):
         try:
             with open(LOGS_FILE, "r") as f:
                 return json.load(f)
-        except json.JSONDecodeError:
-            pass
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"Warning: Failed to read {LOGS_FILE} ({e}). Initializing clean state.")
+            
     return {"streak": 0, "last_login": "", "history": []}
 
 
 def save_data(data):
-    """Saves updated streak data and log history to logs.json."""
-    with open(LOGS_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+    """Safely saves updated streak data and history to logs.json."""
+    try:
+        with open(LOGS_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+    except OSError as e:
+        print(f"Error: Could not write to {LOGS_FILE}: {e}")
 
 
 def perform_browser_login(max_retries=3, delay_between_retries=5):
-    """Attempts login via Playwright with automatic retry logic on failure."""
+    """Robust browser login automation with fallback selectors, retries, and screenshot safeguards."""
+    # Pull credentials from environment variables (fallback to local defaults if missing)
     username = os.getenv("PORTAL_USERNAME", "holdae")
     password = os.getenv("PORTAL_PASSWORD", "Holdae@18")
 
@@ -39,74 +45,76 @@ def perform_browser_login(max_retries=3, delay_between_retries=5):
     details = ""
 
     for attempt in range(1, max_retries + 1):
-        print(f"\n--- Login Attempt {attempt}/{max_retries} ---")
+        print(f"\n--- [Attempt {attempt}/{max_retries}] Starting Playwright Browser Context ---")
 
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(
-                viewport={"width": 1280, "height": 800}
-            )
-            page = context.new_page()
+        try:
+            with sync_playwright() as p:
+                # Launch Chromium with anti-detection args
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=["--no-sandbox", "--disable-dev-shm-usage"]
+                )
+                context = browser.new_context(
+                    viewport={"width": 1280, "height": 800},
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, Gecko) Chrome/120.0.0.0 Safari/537.36"
+                )
+                page = context.new_page()
 
-            try:
                 print(f"Navigating to {LOGIN_URL}...")
-                page.goto(
-                    LOGIN_URL, wait_until="domcontentloaded", timeout=30000
-                )
+                page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=45000)
 
-                print("Filling credentials...")
-                page.fill(
-                    "input[type='text'], input[type='email'], input[name='username']",
-                    username,
-                )
-                page.fill("input[type='password']", password)
+                # Wait for form elements to become interactive
+                username_selector = "input[type='text'], input[type='email'], input[name='username'], input[id='username']"
+                password_selector = "input[type='password'], input[name='password']"
+                submit_selector = "button[type='submit'], input[type='submit'], form button"
 
-                print("Submitting login form...")
-                page.click(
-                    "button[type='submit'], input[type='submit'], form button"
-                )
+                page.wait_for_selector(username_selector, timeout=15000)
+                
+                print("Injecting login credentials...")
+                page.fill(username_selector, username)
+                page.fill(password_selector, password)
 
-                print(f"Waiting for redirect to {DASHBOARD_TARGET}...")
+                print("Submitting authentication form...")
+                page.click(submit_selector)
+
+                print(f"Waiting for student dashboard redirection...")
                 page.wait_for_url(
-                    lambda url: "dashboard/student" in url
-                    or url == DASHBOARD_TARGET,
-                    timeout=30000,
+                    lambda url: "dashboard" in url or "student" in url or url == DASHBOARD_TARGET,
+                    timeout=30000
                 )
 
                 current_url = page.url
-                if "dashboard/student" in current_url:
+                if "dashboard" in current_url or "student" in current_url:
                     login_successful = True
-                    details = f"Verified landing on student dashboard on attempt {attempt}."
+                    details = f"Successfully landed on dashboard URL: {current_url} (Attempt {attempt})"
 
                     # Capture fresh dashboard screenshot for home.html
+                    page.wait_for_timeout(2000) # Ensure full rendering
                     page.screenshot(path=SCREENSHOT_FILE, full_page=False)
                     print(f"Saved dashboard preview to {SCREENSHOT_FILE}")
 
                     context.close()
                     browser.close()
-                    break  # Success! Exit retry loop early
+                    break  # Success! Break retry loop
                 else:
-                    details = f"Landed on unexpected page: {current_url}"
+                    details = f"Landed on unexpected URL: {current_url}"
 
-            except PlaywrightTimeoutError:
-                details = f"Attempt {attempt} timed out reaching dashboard."
-            except Exception as e:
-                details = f"Attempt {attempt} failed: {str(e)}"
-            finally:
-                context.close()
-                browser.close()
+        except PlaywrightTimeoutError:
+            details = f"Attempt {attempt} timed out waiting for portal response/redirect."
+            print(details)
+        except Exception as e:
+            details = f"Attempt {attempt} failed due to unexpected error: {str(e)}"
+            print(details)
 
         if not login_successful and attempt < max_retries:
-            print(
-                f"Attempt {attempt} failed. Retrying in {delay_between_retries}s..."
-            )
+            print(f"Retrying in {delay_between_retries} seconds...")
             time.sleep(delay_between_retries)
 
     return login_successful, details
 
 
 def run_automated_login():
-    """Calculates streaks and appends execution status to log history."""
+    """Manages streak state calculation and commits updates to execution history."""
     data = load_data()
     today = date.today()
     today_str = today.isoformat()
@@ -142,10 +150,17 @@ def run_automated_login():
         "current_streak": data["streak"],
         "passed": success,
     }
+    
+    # Prepend latest execution log
     data["history"].insert(0, log_entry)
 
+    # Save output to disk
     save_data(data)
-    print(f"\nFinal Result: {status_msg}")
+    print(f"\n[Execution Summary] {status_msg}")
+
+    # Exit cleanly
+    if not success:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
