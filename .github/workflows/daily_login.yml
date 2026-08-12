@@ -2,11 +2,9 @@ name: Daily Login Automation
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Runs daily at 06:00 UTC
-  workflow_dispatch:       # Allows manual trigger
-
-permissions:
-  contents: write
+    # Runs daily at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
 
 jobs:
   run-streak-bot:
@@ -21,13 +19,13 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install playwright
-          playwright install chromium
+          playwright install chromium --with-deps
 
-      - name: Run Bot
+      - name: Execute Login & Capture Script
         env:
           BOT_USERNAME: ${{ secrets.BOT_USERNAME }}
           BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
@@ -38,5 +36,9 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add logs.json step_*.png dashboard.png || true
-          git diff --quiet && git diff --staged --quiet || (git commit -m "auto: publish step captures and updated streak logs [skip ci]" && git push)
+          # Stage all generated PNG images and logs safely
+          git add *.png logs.json
+          
+          # Commit only if there are staged changes
+          git diff --staged --quiet || git commit -m "chore: update daily screenshots and logs [skip ci]"
+          git push
