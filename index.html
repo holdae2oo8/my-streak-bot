@@ -3,71 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streak Log Dashboard</title>
+    <title>Mission Control | Streak Dashboard </title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.16/index.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.16/index.min.css" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Animation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        h1 { margin-top: 0; text-align: center; color: #1a1a1a; }
-        .streak-card { text-align: center; background: #fff2ee; border: 2px solid #ffefe9; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-        .streak-number { font-size: 48px; font-weight: bold; color: #ff4500; margin: 0; }
-        .streak-label { font-weight: 600; color: #666; margin-top: 4px; }
-        .log-list { list-style: none; padding: 0; margin: 0; }
-        .log-item { border-bottom: 1px solid #eee; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
-        .log-item:last-child { border-bottom: none; }
-        .timestamp { font-size: 0.85em; color: #888; }
-        .status { font-weight: 500; color: #333; }
-        .badge { background: #eef2ff; color: #4f46e5; padding: 4px 8px; border-radius: 6px; font-size: 0.8em; font-weight: bold; }
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent: #f97316; /* Orange for fire */
+            --success: #10b981;
+            --fail: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: #e2e8f0;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, .streak-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* Animated Background Mesh */
+        .mesh-gradient {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            background: 
+                radial-gradient(at 0% 0%, rgba(249, 115, 22, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            animation: meshMove 20s ease infinite alternate;
+        }
+
+        @keyframes meshMove {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* Glassmorphism Card */
+        .glass-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Glow Effects */
+        .glow-text { text-shadow: 0 0 20px rgba(249, 115, 22, 0.5); }
+        .glow-box { box-shadow: 0 0 30px rgba(249, 115, 22, 0.1); }
+        
+        /* Loader */
+        .loader-ring {
+            display: inline-block;
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Image Hover Zoom Container */
+        .img-container { overflow: hidden; }
+        .img-zoom { transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .img-container:hover .img-zoom { transform: scale(1.03); }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>Daily Streak Log</h1>
-        <div class="streak-card">
-            <div class="streak-number" id="streak">🔥 -</div>
-            <div class="streak-label">Current Streak</div>
+<body class="antialiased selection:bg-orange-500 selection:text-white">
+
+    <div class="mesh-gradient"></div>
+
+    <div class="container mx-auto px-4 py-8 max-w-5xl relative z-10">
+        
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4 animate-fade-in-down">
+            <div class="flex items-center gap-3">
+                <div class="p-3 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl shadow-lg shadow-orange-500/20">
+                    <i data-lucide="activity" class="text-white w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Mission Control</h1>
+                    <p class="text-slate-400 text-sm">Automated Verification System</p>
+                </div>
+            </div>
+            
+            <button onclick="triggerManualLogin()" id="run-btn" class="group relative px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-full font-medium transition-all duration-300 border border-slate-700 hover:border-orange-500/50 flex items-center gap-2 overflow-hidden">
+                <span class="relative z-10 flex items-center gap-2">
+                    <i data-lucide="zap" class="w-4 h-4 text-orange-400 group-hover:text-orange-300"></i>
+                    Run Manual Sync
+                </span>
+                <div class="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/10 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+            </button>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Stats & Preview -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Streak Card -->
+                <div class="glass-panel rounded-2xl p-8 relative overflow-hidden glow-box group">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <i data-lucide="flame" class="w-32 h-32 text-orange-500"></i>
+                    </div>
+                    
+                    <div class="relative z-10 flex flex-col items-center justify-center text-center">
+                        <span class="text-slate-400 uppercase tracking-widest text-xs font-semibold mb-2">Current Streak</span>
+                        <div class="flex items-baseline gap-1">
+                            <span id="streak-val" class="text-7xl md:text-8xl font-bold streak-font bg-clip-text text-transparent bg-gradient-to-b from-orange-400 to-red-600 glow-text filter drop-shadow-lg">--</span>
+                            <span class="text-2xl text-orange-500/80">days</span>
+                        </div>
+                        <div class="mt-4 flex items-center gap-2 text-sm text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            <span>System Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Preview -->
+                <div class="glass-panel rounded-2xl overflow-hidden border border-slate-700/50">
+                    <div class="bg-slate-900/80 px-4 py-3 border-b border-slate-700/50 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-1.5">
+                                <div class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                            </div>
+                            <span class="ml-3 text-xs text-slate-500 font-mono">dashboard.interschoolscoding.com</span>
+                        </div>
+                        <i data-lucide="maximize-2" class="w-4 h-4 text-slate-500 cursor-pointer hover:text-white"></i>
+                    </div>
+                    <div class="relative img-container bg-slate-800 aspect-video flex items-center justify-center">
+                        <div id="img-loader" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-900">
+                            <div class="loader-ring mb-3"></div>
+                            <span class="text-xs text-slate-500">Fetching live capture...</span>
+                        </div>
+                        <img id="dashboard-preview" 
+                             src="" 
+                             alt="Dashboard Capture" 
+                             class="w-full h-full object-cover object-top img-zoom opacity-0 transition-opacity duration-500"
+                             onload="handleImageLoad(this)"
+                             onerror="handleImageError(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Logs -->
+            <div class="lg:col-span-1">
+                <div class="glass-panel rounded-2xl h-full flex flex-col max-h-[600px]">
+                    <div class="p-5 border-b border-slate-700/50 flex justify-between items-center bg-slate-800/30">
+                        <h2 class="font-semibold text-lg flex items-center gap-2">
+                            <i data-lucide="scroll-text" class="w-5 h-5 text-blue-400"></i>
+                            Execution Logs
+                        </h2>
+                        <span class="text-xs text-slate-500" id="last-updated">Updated just now</span>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto p-4 space-y-3" id="log-container">
+                        <!-- Logs injected here -->
+                        <div class="flex flex-col items-center justify-center h-40 text-slate-500">
+                            <div class="loader-ring mb-2"></div>
+                            <span class="text-sm">Syncing history...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
         
-        <h2>Recent Logins</h2>
-        <ul class="log-list" id="log-list">
-            <li class="log-item">Loading logs...</li>
-        </ul>
+        <footer class="mt-12 text-center text-slate-600 text-sm">
+            <p>&copy; 2026 Interschool Coding Automation. Secure Connection.</p>
+        </footer>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-3">
+            <i data-lucide="info" class="text-blue-400"></i>
+            <div class="text-sm">
+                <p class="font-bold">Workflow Triggered</p>
+                <p class="text-slate-400">Check GitHub Actions for progress.</p>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Initialize Icons
+        lucide.createIcons();
+
         async function fetchLogs() {
+            const logContainer = document.getElementById('log-container');
+            const streakEl = document.getElementById('streak-val');
+            
             try {
-                // Fetch updated logs file (bypassing browser cache)
                 const response = await fetch('logs.json?t=' + new Date().getTime());
                 const data = await response.json();
 
-                document.getElementById('streak').innerText = `🔥 ${data.streak}`;
+                // Update Streak with counting animation
+                if(data.streak !== undefined) {
+                    animateValue(streakEl, 0, data.streak, 1500);
+                } else {
+                    streakEl.innerText = "0";
+                }
 
-                const list = document.getElementById('log-list');
-                list.innerHTML = '';
+                // Update Image Source
+                const imgEl = document.getElementById('dashboard-preview');
+                imgEl.src = 'dashboard.png?t=' + new Date().getTime();
 
+                // Render Logs
+                logContainer.innerHTML = '';
+                
                 if (!data.history || data.history.length === 0) {
-                    list.innerHTML = '<li class="log-item">No login logs found.</li>';
+                    logContainer.innerHTML = '<div class="text-center text-slate-500 py-4">No logs available</div>';
                     return;
                 }
 
-                data.history.forEach(entry => {
-                    const li = document.createElement('li');
-                    li.className = 'log-item';
-                    li.innerHTML = `
-                        <div>
-                            <div class="status">${entry.status}</div>
-                            <div class="timestamp">${entry.timestamp}</div>
+                data.history.forEach((entry, index) => {
+                    const dateObj = new Date(entry.timestamp);
+                    const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    
+                    const item = document.createElement('div');
+                    item.className = `p-3 rounded-lg border transition-all duration-300 hover:bg-slate-700/30 ${entry.passed !== false ? 'border-slate-700/50 bg-slate-800/20' : 'border-red-900/30 bg-red-900/10'}`;
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(10px)';
+                    
+                    const isPassed = entry.passed !== false;
+                    const icon = isPassed ? 'check-circle' : 'alert-circle';
+                    const colorClass = isPassed ? 'text-emerald-400' : 'text-red-400';
+                    
+                    item.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex gap-3">
+                                <div class="mt-1"><i data-lucide="${icon}" class="w-4 h-4 ${colorClass}"></i></div>
+                                <div>
+                                    <div class="text-sm font-medium text-slate-200">${entry.status}</div>
+                                    <div class="text-xs text-slate-500 mt-0.5">${dateStr} • ${timeStr}</div>
+                                </div>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${isPassed ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}">
+                                ${isPassed ? 'PASSED' : 'FAILED'}
+                            </span>
                         </div>
-                        <span class="badge">🔥 ${entry.current_streak}</span>
                     `;
-                    list.appendChild(li);
+                    
+                    logContainer.appendChild(item);
+                    
+                    // Re-init icons for new elements
+                    lucide.createIcons();
+
+                    // Staggered Animation
+                    gsap.to(item, {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.4,
+                        delay: index * 0.05,
+                        ease: "power2.out"
+                    });
                 });
+
             } catch (err) {
-                document.getElementById('log-list').innerHTML = '<li class="log-item">Error loading logs.</li>';
+                console.error(err);
+                logContainer.innerHTML = `<div class="text-red-400 text-center py-4">Error loading logs.<br><span class="text-xs text-slate-500">Please ensure logs.json exists.</span></div>`;
+                streakEl.innerText = "-";
             }
         }
 
-        fetchLogs();
+        function handleImageLoad(img) {
+            const loader = document.getElementById('img-loader');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 300);
+            img.classList.remove('opacity-0');
+        }
+
+        function handleImageError(img) {
+            const loader = document.getElementById('img-loader');
+            loader.innerHTML = `
+                <div class="text-center">
+                    <i data-lucide="image-off" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i>
+                    <span class="text-xs text-slate-500">Preview Unavailable</span>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function triggerManualLogin() {
+            const btn = document.getElementById('run-btn');
+            const originalContent = btn.innerHTML;
+            
+            // Button Loading State
+            btn.disabled = true;
+            btn.innerHTML = `<div class="loader-ring w-4 h-4 border-white/30 border-t-white"></div> <span class="ml-2">Triggering...</span>`;
+            
+            // Show Toast
+            const toast = document.getElementById('toast');
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                // Reset Button
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                lucide.createIcons();
+                
+                // Hide Toast after delay
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 3000);
+                
+                alert("To run the login on-demand directly from GitHub:\n\n1. Go to your GitHub Repository -> Actions tab.\n2. Select 'Daily Login Automation'.\n3. Click 'Run workflow'.");
+                
+            }, 1500);
+        }
+
+        // Initial Load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLogs();
+        });
+
     </script>
 </body>
 </html>
