@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streak Log Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { margin-top: 0; text-align: center; color: #1a1a1a; }
+        .streak-card { text-align: center; background: #fff2ee; border: 2px solid #ffefe9; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+        .streak-number { font-size: 48px; font-weight: bold; color: #ff4500; margin: 0; }
+        .streak-label { font-weight: 600; color: #666; margin-top: 4px; }
+        .log-list { list-style: none; padding: 0; margin: 0; }
+        .log-item { border-bottom: 1px solid #eee; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+        .log-item:last-child { border-bottom: none; }
+        .timestamp { font-size: 0.85em; color: #888; }
+        .status { font-weight: 500; color: #333; }
+        .badge { background: #eef2ff; color: #4f46e5; padding: 4px 8px; border-radius: 6px; font-size: 0.8em; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Daily Streak Log</h1>
+        <div class="streak-card">
+            <div class="streak-number" id="streak">🔥 -</div>
+            <div class="streak-label">Current Streak</div>
+        </div>
+        
+        <h2>Recent Logins</h2>
+        <ul class="log-list" id="log-list">
+            <li class="log-item">Loading logs...</li>
+        </ul>
+    </div>
+
+    <script>
+        async function fetchLogs() {
+            try {
+                // Fetch updated logs file (bypassing browser cache)
+                const response = await fetch('logs.json?t=' + new Date().getTime());
+                const data = await response.json();
+
+                document.getElementById('streak').innerText = `🔥 ${data.streak}`;
+
+                const list = document.getElementById('log-list');
+                list.innerHTML = '';
+
+                if (!data.history || data.history.length === 0) {
+                    list.innerHTML = '<li class="log-item">No login logs found.</li>';
+                    return;
+                }
+
+                data.history.forEach(entry => {
+                    const li = document.createElement('li');
+                    li.className = 'log-item';
+                    li.innerHTML = `
+                        <div>
+                            <div class="status">${entry.status}</div>
+                            <div class="timestamp">${entry.timestamp}</div>
+                        </div>
+                        <span class="badge">🔥 ${entry.current_streak}</span>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (err) {
+                document.getElementById('log-list').innerHTML = '<li class="log-item">Error loading logs.</li>';
+            }
+        }
+
+        fetchLogs();
+    </script>
+</body>
+</html>
