@@ -2,15 +2,15 @@ name: Daily Login Automation
 
 on:
   schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
+    - cron: '0 0 * * *'  # Runs automatically at 00:00 UTC daily
+  workflow_dispatch:      # Allows manual triggers from GitHub UI or Dashboard
 
 jobs:
   run-streak-bot:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: write  # Enables write access to commit logs.json & dashboard.png
 
     steps:
       - name: Checkout Repository
@@ -35,7 +35,7 @@ jobs:
 
       - name: Commit and Push Updated Logs & Screenshot
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add logs.json dashboard.png
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Automated daily login update" && git push)
+          git diff --staged --quiet || (git commit -m "Automated daily login update" && git push)
