@@ -10,7 +10,7 @@ LOGIN_URL = "https://dashboard.interschoolscoding.com"
 TARGET_URL = "https://dashboard.interschoolscoding.com/home/dashboard/student"
 
 def cleanup_old_screenshots():
-    """Deletes existing daily screenshots before running the current run."""
+    """Deletes existing daily screenshots before running."""
     screenshots = glob.glob("step_*.png") + ["dashboard.png"]
     for img in screenshots:
         if os.path.exists(img):
@@ -63,13 +63,17 @@ async def run_bot():
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(viewport={"width": 1440, "height": 900})
         page = await context.new_page()
+        
+        # Set default navigation timeout to 60 seconds (60,000 ms)
+        page.set_default_navigation_timeout(60000)
+        page.set_default_timeout(60000)
 
         try:
             # ----------------------------------------------------
             # STEP 1: Login Page
             # ----------------------------------------------------
             print("Step 1: Navigating to login page...")
-            await page.goto(LOGIN_URL, wait_until="networkidle")
+            await page.goto(LOGIN_URL, wait_until="networkidle", timeout=60000)
             await page.screenshot(path="step_1.png")
             steps_taken.append({"step": 1, "label": "Login Page", "file": "step_1.png"})
 
@@ -77,8 +81,8 @@ async def run_bot():
             # STEP 2: Input Credentials
             # ----------------------------------------------------
             print("Step 2: Entering login credentials...")
-            await page.fill("input[placeholder='Enter username']", username)
-            await page.fill("input[placeholder='Enter your password']", password)
+            await page.fill("input[placeholder='Enter username']", username, timeout=60000)
+            await page.fill("input[placeholder='Enter your password']", password, timeout=60000)
             await page.screenshot(path="step_2.png")
             steps_taken.append({"step": 2, "label": "Credentials Entered", "file": "step_2.png"})
 
@@ -88,21 +92,22 @@ async def run_bot():
             print("Step 3: Submitting login & capturing success notification...")
             await page.click("button:has-text('Sign in')")
             
-            # Wait for the toast popup ("Login successful")
             try:
-                await page.wait_for_selector("text=Login successful", timeout=5000)
+                await page.wait_for_selector("text=Login successful", timeout=10000)
             except Exception:
-                await page.wait_for_timeout(1000) # Fallback timing if toast disappears fast
+                await page.wait_for_timeout(1000)
                 
             await page.screenshot(path="step_3.png")
             steps_taken.append({"step": 3, "label": "Successful Login Notification", "file": "step_3.png"})
 
             # ----------------------------------------------------
-            # STEP 4: Navigate / Wait for Final Student Dashboard
+            # STEP 4: Wait Specifically for Student Dashboard URL
             # ----------------------------------------------------
-            print("Step 4: Navigating to Student Dashboard...")
-            await page.wait_for_url("**/home/dashboard/student**", timeout=10000)
-            await page.wait_for_load_state("networkidle")
+            print(f"Step 4: Waiting for URL: {TARGET_URL}...")
+            await page.wait_for_url(TARGET_URL, timeout=60000)
+            
+            # Additional wait to let all dashboard cards and stats load completely
+            await page.wait_for_load_state("networkidle", timeout=60000)
             await page.screenshot(path="dashboard.png")
             steps_taken.append({"step": 4, "label": "Student Dashboard", "file": "dashboard.png"})
 
