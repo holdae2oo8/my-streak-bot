@@ -186,7 +186,7 @@
                     </div>
                 </div>
 
-                <!-- Dashboard Preview -->
+                <!-- Dashboard Interactive Frame Preview -->
                 <div class="glass-panel rounded-3xl overflow-hidden">
                     <div class="bg-slate-100/80 dark:bg-slate-900/80 px-5 py-3 border-b border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
@@ -195,21 +195,48 @@
                                 <div class="w-3 h-3 rounded-full bg-amber-500/30 border border-amber-500/60"></div>
                                 <div class="w-3 h-3 rounded-full bg-emerald-500/30 border border-emerald-500/60"></div>
                             </div>
-                            <span class="ml-2 text-xs text-slate-500 dark:text-slate-400 font-mono tracking-tight">dashboard.interschoolscoding.com</span>
+                            <span id="frame-url-label" class="ml-2 text-xs text-slate-500 dark:text-slate-400 font-mono tracking-tight">dashboard.interschoolscoding.com</span>
                         </div>
-                        <button onclick="openImageModal()" title="Expand view" class="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                            <i data-lucide="maximize-2" class="w-4 h-4 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"></i>
-                        </button>
+
+                        <div class="flex items-center gap-2">
+                            <!-- View Toggle Mode Button -->
+                            <div class="flex bg-slate-200/60 dark:bg-slate-800/60 p-1 rounded-xl text-xs">
+                                <button id="btn-mode-iframe" onclick="setViewMode('iframe')" class="px-2.5 py-1 rounded-lg font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm transition-all flex items-center gap-1">
+                                    <i data-lucide="globe" class="w-3.5 h-3.5"></i> Live
+                                </button>
+                                <button id="btn-mode-img" onclick="setViewMode('img')" class="px-2.5 py-1 rounded-lg font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center gap-1">
+                                    <i data-lucide="image" class="w-3.5 h-3.5"></i> Capture
+                                </button>
+                            </div>
+
+                            <button onclick="reloadPreview()" title="Reload Frame" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <i data-lucide="rotate-cw" class="w-4 h-4 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"></i>
+                            </button>
+                            <button onclick="openImageModal()" title="Expand view" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <i data-lucide="maximize-2" class="w-4 h-4 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="relative img-container bg-slate-200/50 dark:bg-slate-950/50 aspect-video flex items-center justify-center cursor-pointer" onclick="openImageModal()">
-                        <div id="img-loader" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-100 dark:bg-slate-900/90 transition-opacity duration-300">
+
+                    <div class="relative img-container bg-slate-200/50 dark:bg-slate-950/50 aspect-video flex items-center justify-center">
+                        <div id="img-loader" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-100 dark:bg-slate-900/90 transition-opacity duration-300 pointer-events-none">
                             <div class="loader-ring mb-3"></div>
-                            <span class="text-xs text-slate-500 font-medium">Fetching live capture...</span>
+                            <span class="text-xs text-slate-500 font-medium">Connecting to application view...</span>
                         </div>
+
+                        <!-- Live Interactive iframe -->
+                        <iframe id="live-iframe" 
+                                src="https://dashboard.interschoolscoding.com" 
+                                class="w-full h-full border-0 relative z-10" 
+                                onload="handleIframeLoad()" 
+                                onerror="handleIframeError()"></iframe>
+
+                        <!-- Static Capture Fallback -->
                         <img id="dashboard-preview" 
                              src="" 
                              alt="Dashboard Capture" 
-                             class="w-full h-full object-cover object-top img-zoom opacity-0 transition-opacity duration-500"
+                             class="hidden w-full h-full object-cover object-top img-zoom opacity-0 transition-opacity duration-500 relative z-10 cursor-pointer"
+                             onclick="openImageModal()"
                              onload="handleImageLoad(this)"
                              onerror="handleImageError(this)">
                     </div>
@@ -256,7 +283,7 @@
         </div>
     </div>
 
-    <!-- Image Lightbox Modal -->
+    <!-- Image / Preview Lightbox Modal -->
     <div id="img-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4" onclick="closeImageModal()">
         <div class="relative max-w-5xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl" onclick="event.stopPropagation()">
             <div class="p-4 bg-slate-100/80 dark:bg-slate-800/80 flex justify-between items-center border-b border-slate-200/60 dark:border-slate-800">
@@ -270,6 +297,10 @@
     </div>
 
     <script>
+        // Target site URL definition
+        const TARGET_APP_URL = "https://dashboard.interschoolscoding.com";
+        let activeViewMode = 'iframe';
+
         // Init Lucide Icons
         lucide.createIcons();
 
@@ -294,11 +325,63 @@
             lucide.createIcons();
         }
 
+        function setViewMode(mode) {
+            activeViewMode = mode;
+            const iframe = document.getElementById('live-iframe');
+            const img = document.getElementById('dashboard-preview');
+            const btnIframe = document.getElementById('btn-mode-iframe');
+            const btnImg = document.getElementById('btn-mode-img');
+            const loader = document.getElementById('img-loader');
+
+            if (mode === 'iframe') {
+                img.classList.add('hidden');
+                iframe.classList.remove('hidden');
+                
+                btnIframe.className = "px-2.5 py-1 rounded-lg font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm transition-all flex items-center gap-1";
+                btnImg.className = "px-2.5 py-1 rounded-lg font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center gap-1";
+            } else {
+                iframe.classList.add('hidden');
+                img.classList.remove('hidden');
+
+                btnImg.className = "px-2.5 py-1 rounded-lg font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm transition-all flex items-center gap-1";
+                btnIframe.className = "px-2.5 py-1 rounded-lg font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center gap-1";
+                
+                if (!img.src || img.src === window.location.href) {
+                    img.src = 'dashboard.png?t=' + new Date().getTime();
+                }
+            }
+            lucide.createIcons();
+        }
+
+        function reloadPreview() {
+            const loader = document.getElementById('img-loader');
+            loader.style.display = 'flex';
+            loader.style.opacity = '1';
+
+            if (activeViewMode === 'iframe') {
+                const iframe = document.getElementById('live-iframe');
+                iframe.src = TARGET_APP_URL + '?t=' + new Date().getTime();
+            } else {
+                const img = document.getElementById('dashboard-preview');
+                img.src = 'dashboard.png?t=' + new Date().getTime();
+            }
+        }
+
+        function handleIframeLoad() {
+            const loader = document.getElementById('img-loader');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 300);
+        }
+
+        function handleIframeError() {
+            // If the application site blocks iframe embedding (X-Frame-Options/CORS), gracefully fallback to screenshot capture mode
+            setViewMode('img');
+        }
+
         async function fetchLogs() {
             const logContainer = document.getElementById('log-container');
             const streakEl = document.getElementById('streak-val');
             const statusBadge = document.getElementById('system-status-badge');
-            const statusText = document.getElementById('system-status-text');
             const lastUpdatedEl = document.getElementById('last-updated');
             
             try {
@@ -311,9 +394,8 @@
                     streakEl.innerText = "0";
                 }
 
-                const imgEl = document.getElementById('dashboard-preview');
                 const cacheBuster = 'dashboard.png?t=' + new Date().getTime();
-                imgEl.src = cacheBuster;
+                document.getElementById('dashboard-preview').src = cacheBuster;
                 document.getElementById('modal-img').src = cacheBuster;
 
                 logContainer.innerHTML = '';
@@ -395,21 +477,25 @@
         }
 
         function handleImageLoad(img) {
-            const loader = document.getElementById('img-loader');
-            loader.style.opacity = '0';
-            setTimeout(() => loader.style.display = 'none', 300);
+            if (activeViewMode === 'img') {
+                const loader = document.getElementById('img-loader');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 300);
+            }
             img.classList.remove('opacity-0');
         }
 
         function handleImageError(img) {
-            const loader = document.getElementById('img-loader');
-            loader.innerHTML = `
-                <div class="text-center p-4">
-                    <i data-lucide="image-off" class="w-7 h-7 text-slate-400 mx-auto mb-2 opacity-60"></i>
-                    <span class="text-xs text-slate-400 font-medium">Preview Unavailable</span>
-                </div>
-            `;
-            lucide.createIcons();
+            if (activeViewMode === 'img') {
+                const loader = document.getElementById('img-loader');
+                loader.innerHTML = `
+                    <div class="text-center p-4">
+                        <i data-lucide="image-off" class="w-7 h-7 text-slate-400 mx-auto mb-2 opacity-60"></i>
+                        <span class="text-xs text-slate-400 font-medium">Preview Unavailable</span>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
         }
 
         function animateValue(obj, start, end, duration) {
