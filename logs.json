@@ -3,6 +3,28 @@
   "last_login": "2026-08-12",
   "history": [
     {
+      "timestamp": "2026-08-12T14:01:55Z",
+      "status": "Execution failed: Timeout 60000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"https://dashboard.interschoolscoding.com/home/dashboard/student\" until 'load'\n============================================================",
+      "passed": false,
+      "steps": [
+        {
+          "step": 1,
+          "label": "Login Page",
+          "file": "step_1.png"
+        },
+        {
+          "step": 2,
+          "label": "Credentials Entered",
+          "file": "step_2.png"
+        },
+        {
+          "step": 3,
+          "label": "Successful Login Notification",
+          "file": "step_3.png"
+        }
+      ]
+    },
+    {
       "timestamp": "2026-08-12T13:54:53Z",
       "status": "Execution failed: Timeout 60000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"https://dashboard.interschoolscoding.com/home/dashboard/student\" until 'load'\n============================================================",
       "passed": false,
