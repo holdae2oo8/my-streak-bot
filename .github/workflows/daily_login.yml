@@ -2,11 +2,11 @@ name: Daily Login Automation
 
 on:
   schedule:
-    - cron: '0 6 * * *' # Automates daily execution at 06:00 UTC
-  workflow_dispatch:      # Manual trigger button
+    - cron: '0 6 * * *'  # Runs daily at 06:00 UTC
+  workflow_dispatch:       # Allows manual trigger
 
 permissions:
-  contents: write # Essential for pushing log updates back to repository
+  contents: write
 
 jobs:
   run-streak-bot:
@@ -33,10 +33,10 @@ jobs:
           BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
         run: python bot.py
 
-      - name: Commit and Push Updated Logs & Screenshot
+      - name: Commit and Push Updated Captures & Logs
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add logs.json dashboard.png || true
-          git diff --quiet && git diff --staged --quiet || (git commit -m "auto: update logs and screenshot [skip ci]" && git push)
+          git add logs.json step_*.png dashboard.png || true
+          git diff --quiet && git diff --staged --quiet || (git commit -m "auto: publish step captures and updated streak logs [skip ci]" && git push)
