@@ -13,18 +13,24 @@ DASHBOARD_TARGET = (
 
 
 def load_data():
+    """Loads existing streak data and history from logs.json."""
     if os.path.exists(LOGS_FILE):
-        with open(LOGS_FILE, "r") as f:
-            return json.load(f)
+        try:
+            with open(LOGS_FILE, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            pass
     return {"streak": 0, "last_login": "", "history": []}
 
 
 def save_data(data):
+    """Saves updated streak data and history to logs.json."""
     with open(LOGS_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
 
 def perform_browser_login():
+    """Logs into the dashboard using Playwright and captures a screenshot."""
     username = os.getenv("PORTAL_USERNAME", "holdae")
     password = os.getenv("PORTAL_PASSWORD", "Holdae@18")
 
@@ -38,7 +44,7 @@ def perform_browser_login():
 
         try:
             print(f"Navigating to {LOGIN_URL}...")
-            page.goto(LOGIN_URL, wait_until="networkidle", timeout=30000)
+            page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=30000)
 
             print("Filling login credentials...")
             page.fill(
@@ -52,7 +58,7 @@ def perform_browser_login():
                 "button[type='submit'], input[type='submit'], form button"
             )
 
-            print(f"Waiting for redirection to {DASHBOARD_TARGET}...")
+            print(f"Waiting for dashboard redirect to {DASHBOARD_TARGET}...")
             page.wait_for_url(
                 lambda url: "dashboard/student" in url or url == DASHBOARD_TARGET,
                 timeout=30000,
@@ -63,7 +69,7 @@ def perform_browser_login():
                 login_successful = True
                 details = f"Verified landing on student dashboard ({current_url})."
 
-                # Capture page state preview for home.html
+                # Capture preview image for home.html
                 page.screenshot(path=SCREENSHOT_FILE, full_page=False)
                 print(f"Saved dashboard preview to {SCREENSHOT_FILE}")
             else:
@@ -83,6 +89,7 @@ def perform_browser_login():
 
 
 def run_automated_login():
+    """Calculates streaks and appends execution status to log history."""
     data = load_data()
     today = date.today()
     today_str = today.isoformat()
