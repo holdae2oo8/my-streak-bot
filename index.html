@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mission Control | Streak Dashboard </title>
+    <title>Mission Control | Streak Dashboard</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,7 @@
         :root {
             --bg-color: #0f172a;
             --card-bg: rgba(30, 41, 59, 0.7);
-            --accent: #f97316; /* Orange for fire */
+            --accent: #f97316;
             --success: #10b981;
             --fail: #ef4444;
         }
@@ -39,7 +39,6 @@
             font-family: 'Space Grotesk', sans-serif;
         }
 
-        /* Animated Background Mesh */
         .mesh-gradient {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -56,7 +55,6 @@
             100% { transform: scale(1.1); }
         }
 
-        /* Glassmorphism Card */
         .glass-panel {
             background: var(--card-bg);
             backdrop-filter: blur(12px);
@@ -65,17 +63,14 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-        /* Glow Effects */
         .glow-text { text-shadow: 0 0 20px rgba(249, 115, 22, 0.5); }
         .glow-box { box-shadow: 0 0 30px rgba(249, 115, 22, 0.1); }
         
-        /* Loader */
         .loader-ring {
             display: inline-block;
             width: 20px; height: 20px;
@@ -86,7 +81,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Image Hover Zoom Container */
         .img-container { overflow: hidden; }
         .img-zoom { transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         .img-container:hover .img-zoom { transform: scale(1.03); }
@@ -137,9 +131,9 @@
                             <span id="streak-val" class="text-7xl md:text-8xl font-bold streak-font bg-clip-text text-transparent bg-gradient-to-b from-orange-400 to-red-600 glow-text filter drop-shadow-lg">--</span>
                             <span class="text-2xl text-orange-500/80">days</span>
                         </div>
-                        <div class="mt-4 flex items-center gap-2 text-sm text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                        <div id="system-status-badge" class="mt-4 flex items-center gap-2 text-sm text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
                             <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                            <span>System Active</span>
+                            <span id="system-status-text">Syncing System...</span>
                         </div>
                     </div>
                 </div>
@@ -155,9 +149,9 @@
                             </div>
                             <span class="ml-3 text-xs text-slate-500 font-mono">dashboard.interschoolscoding.com</span>
                         </div>
-                        <i data-lucide="maximize-2" class="w-4 h-4 text-slate-500 cursor-pointer hover:text-white"></i>
+                        <i data-lucide="maximize-2" onclick="openImageModal()" class="w-4 h-4 text-slate-500 cursor-pointer hover:text-white"></i>
                     </div>
-                    <div class="relative img-container bg-slate-800 aspect-video flex items-center justify-center">
+                    <div class="relative img-container bg-slate-800 aspect-video flex items-center justify-center cursor-pointer" onclick="openImageModal()">
                         <div id="img-loader" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-900">
                             <div class="loader-ring mb-3"></div>
                             <span class="text-xs text-slate-500">Fetching live capture...</span>
@@ -184,7 +178,6 @@
                     </div>
                     
                     <div class="flex-1 overflow-y-auto p-4 space-y-3" id="log-container">
-                        <!-- Logs injected here -->
                         <div class="flex flex-col items-center justify-center h-40 text-slate-500">
                             <div class="loader-ring mb-2"></div>
                             <span class="text-sm">Syncing history...</span>
@@ -211,35 +204,57 @@
         </div>
     </div>
 
+    <!-- Image Lightbox Modal -->
+    <div id="img-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-4xl w-full bg-slate-900 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="p-4 bg-slate-800 flex justify-between items-center border-b border-slate-700">
+                <span class="text-sm text-slate-300 font-mono">Live Capture Preview</span>
+                <button onclick="closeImageModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <img id="modal-img" src="" class="w-full h-auto max-h-[80vh] object-contain">
+        </div>
+    </div>
+
     <script>
-        // Initialize Icons
         lucide.createIcons();
 
         async function fetchLogs() {
             const logContainer = document.getElementById('log-container');
             const streakEl = document.getElementById('streak-val');
+            const statusBadge = document.getElementById('system-status-badge');
+            const statusText = document.getElementById('system-status-text');
+            const lastUpdatedEl = document.getElementById('last-updated');
             
             try {
                 const response = await fetch('logs.json?t=' + new Date().getTime());
                 const data = await response.json();
 
-                // Update Streak with counting animation
                 if(data.streak !== undefined) {
-                    animateValue(streakEl, 0, data.streak, 1500);
+                    animateValue(streakEl, parseInt(streakEl.innerText) || 0, data.streak, 1000);
                 } else {
                     streakEl.innerText = "0";
                 }
 
-                // Update Image Source
                 const imgEl = document.getElementById('dashboard-preview');
-                imgEl.src = 'dashboard.png?t=' + new Date().getTime();
+                const cacheBuster = 'dashboard.png?t=' + new Date().getTime();
+                imgEl.src = cacheBuster;
+                document.getElementById('modal-img').src = cacheBuster;
 
-                // Render Logs
                 logContainer.innerHTML = '';
                 
                 if (!data.history || data.history.length === 0) {
                     logContainer.innerHTML = '<div class="text-center text-slate-500 py-4">No logs available</div>';
                     return;
+                }
+
+                // Dynamic Status Badge Check
+                const latestRun = data.history[0];
+                if (latestRun.passed !== false) {
+                    statusBadge.className = "mt-4 flex items-center gap-2 text-sm text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20";
+                    statusBadge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i><span>System Active</span>`;
+                } else {
+                    statusBadge.className = "mt-4 flex items-center gap-2 text-sm text-red-400 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20";
+                    statusBadge.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4"></i><span>Last Check Failed</span>`;
                 }
 
                 data.history.forEach((entry, index) => {
@@ -272,19 +287,18 @@
                     `;
                     
                     logContainer.appendChild(item);
-                    
-                    // Re-init icons for new elements
-                    lucide.createIcons();
 
-                    // Staggered Animation
                     gsap.to(item, {
                         opacity: 1,
                         y: 0,
                         duration: 0.4,
-                        delay: index * 0.05,
+                        delay: index * 0.03,
                         ease: "power2.out"
                     });
                 });
+
+                lastUpdatedEl.innerText = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                lucide.createIcons();
 
             } catch (err) {
                 console.error(err);
@@ -303,7 +317,7 @@
         function handleImageError(img) {
             const loader = document.getElementById('img-loader');
             loader.innerHTML = `
-                <div class="text-center">
+                <div class="text-center p-4">
                     <i data-lucide="image-off" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i>
                     <span class="text-xs text-slate-500">Preview Unavailable</span>
                 </div>
@@ -312,6 +326,7 @@
         }
 
         function animateValue(obj, start, end, duration) {
+            if (start === end) { obj.innerHTML = end; return; }
             let startTimestamp = null;
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
@@ -328,35 +343,42 @@
             const btn = document.getElementById('run-btn');
             const originalContent = btn.innerHTML;
             
-            // Button Loading State
             btn.disabled = true;
             btn.innerHTML = `<div class="loader-ring w-4 h-4 border-white/30 border-t-white"></div> <span class="ml-2">Triggering...</span>`;
             
-            // Show Toast
             const toast = document.getElementById('toast');
             toast.classList.remove('translate-y-20', 'opacity-0');
             
             setTimeout(() => {
-                // Reset Button
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
                 lucide.createIcons();
                 
-                // Hide Toast after delay
                 setTimeout(() => {
                     toast.classList.add('translate-y-20', 'opacity-0');
                 }, 3000);
                 
                 alert("To run the login on-demand directly from GitHub:\n\n1. Go to your GitHub Repository -> Actions tab.\n2. Select 'Daily Login Automation'.\n3. Click 'Run workflow'.");
-                
             }, 1500);
         }
 
-        // Initial Load
+        function openImageModal() {
+            const modal = document.getElementById('img-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('img-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             fetchLogs();
+            // Refresh dashboard data automatically every 30 seconds
+            setInterval(fetchLogs, 30000);
         });
-
     </script>
 </body>
 </html>
