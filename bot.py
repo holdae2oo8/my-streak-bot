@@ -5,6 +5,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
 LOGS_FILE = "logs.json"
+SCREENSHOT_FILE = "dashboard.png"
 LOGIN_URL = "https://dashboard.interschoolscoding.com/"
 DASHBOARD_TARGET = (
     "https://dashboard.interschoolscoding.com/home/dashboard/student"
@@ -31,16 +32,14 @@ def perform_browser_login():
     details = ""
 
     with sync_playwright() as p:
-        # Launch headless browser (no GUI window, runs in cloud)
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context()
+        context = browser.new_context(viewport={"width": 1280, "height": 800})
         page = context.new_page()
 
         try:
             print(f"Navigating to {LOGIN_URL}...")
             page.goto(LOGIN_URL, wait_until="networkidle", timeout=30000)
 
-            # Locate input fields dynamically by common selectors
             print("Filling login credentials...")
             page.fill(
                 "input[type='text'], input[type='email'], input[name='username']",
@@ -48,12 +47,11 @@ def perform_browser_login():
             )
             page.fill("input[type='password']", password)
 
-            # Submit the form
+            print("Submitting login form...")
             page.click(
                 "button[type='submit'], input[type='submit'], form button"
             )
 
-            # Wait for navigation to complete and verify target dashboard URL
             print(f"Waiting for redirection to {DASHBOARD_TARGET}...")
             page.wait_for_url(
                 lambda url: "dashboard/student" in url or url == DASHBOARD_TARGET,
@@ -64,6 +62,10 @@ def perform_browser_login():
             if "dashboard/student" in current_url:
                 login_successful = True
                 details = f"Verified landing on student dashboard ({current_url})."
+
+                # Capture page state preview for home.html
+                page.screenshot(path=SCREENSHOT_FILE, full_page=False)
+                print(f"Saved dashboard preview to {SCREENSHOT_FILE}")
             else:
                 details = (
                     f"Logged in, but landed on unexpected page: {current_url}"
@@ -74,8 +76,6 @@ def perform_browser_login():
         except Exception as e:
             details = f"Browser automation error: {str(e)}"
         finally:
-            # Ensure browser context is strictly closed after reading the page
-            print("Closing browser session...")
             context.close()
             browser.close()
 
@@ -88,7 +88,6 @@ def run_automated_login():
     today_str = today.isoformat()
     now_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    # Perform browser verification
     success, details = perform_browser_login()
 
     if success:
@@ -113,11 +112,11 @@ def run_automated_login():
     else:
         status_msg = f"Login check failed: {details}"
 
-    # Record log entry
     log_entry = {
         "timestamp": now_timestamp,
         "status": status_msg,
         "current_streak": data["streak"],
+        "passed": success,
     }
     data["history"].insert(0, log_entry)
 
