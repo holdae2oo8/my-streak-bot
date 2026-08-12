@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mission Control | Streak Dashboard</title>
     
-    <!-- Favicon -->
-    <link rel="icon" href="https://photos.app.goo.gl/Rt4BGvDim9SxwQPdA" type="image/png">
-
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -16,10 +13,11 @@
             theme: {
                 extend: {
                     colors: {
-                        accent: '#f97316',
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        brand: {
+                            50: '#fff7ed',
+                            500: '#f97316',
+                            600: '#ea580c',
+                        }
                     }
                 }
             }
@@ -30,29 +28,29 @@
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.16/index.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.16/index.min.css" rel="stylesheet">
     
-    <!-- Icons -->
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Animation Library -->
+    <!-- GSAP Animation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <style>
         :root {
             --bg-color: #f8fafc;
-            --card-bg: rgba(255, 255, 255, 0.65);
-            --border-color: rgba(0, 0, 0, 0.05);
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --border-color: rgba(0, 0, 0, 0.08);
             --text-main: #0f172a;
             --text-sub: #64748b;
-            --glow-color: rgba(249, 115, 22, 0.2);
+            --glow: rgba(249, 115, 22, 0.15);
         }
 
         .dark {
-            --bg-color: #020617;
-            --card-bg: rgba(15, 23, 42, 0.6);
+            --bg-color: #0b0f17;
+            --card-bg: rgba(15, 23, 42, 0.65);
             --border-color: rgba(255, 255, 255, 0.08);
             --text-main: #f1f5f9;
             --text-sub: #94a3b8;
-            --glow-color: rgba(249, 115, 22, 0.15);
+            --glow: rgba(249, 115, 22, 0.25);
         }
 
         body {
@@ -61,23 +59,29 @@
             color: var(--text-main);
             overflow-x: hidden;
             min-height: 100vh;
-            transition: background-color 0.5s ease, color 0.5s ease;
+            transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         h1, h2, h3, .streak-font {
             font-family: 'Space Grotesk', sans-serif;
         }
 
-        /* Dynamic Mesh Background */
         .mesh-gradient {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
             z-index: -1;
-            opacity: 0.8;
             background: 
-                radial-gradient(circle at 15% 50%, var(--glow-color) 0%, transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 25%);
-            transition: opacity 0.5s ease;
+                radial-gradient(circle at 15% 15%, rgba(249, 115, 22, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+            filter: blur(40px);
+            animation: meshMove 18s ease-in-out infinite alternate;
+        }
+
+        @keyframes meshMove {
+            0% { transform: scale(1) translate(0, 0); }
+            50% { transform: scale(1.08) translate(-10px, 15px); }
+            100% { transform: scale(1.03) translate(10px, -10px); }
         }
 
         .glass-panel {
@@ -85,46 +89,36 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-        
-        .dark .glass-panel {
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .glass-panel:hover {
-            border-color: rgba(249, 115, 22, 0.3);
-            transform: translateY(-2px);
+        .dark .glass-panel {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .dark ::-webkit-scrollbar-thumb { background: #334155; }
-        
-        .glow-text { text-shadow: 0 0 40px var(--glow-color); }
-        
+        ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.3); border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.5); }
+
+        .glow-text { 
+            text-shadow: 0 0 30px var(--glow); 
+        }
+
         .loader-ring {
             display: inline-block;
             width: 20px; height: 20px;
-            border: 2px solid rgba(100, 116, 139, 0.2);
+            border: 2px solid rgba(249, 115, 22, 0.2);
             border-radius: 50%;
             border-top-color: #f97316;
             animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .img-container { overflow: hidden; position: relative; }
-        .img-zoom { transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        .img-container:hover .img-zoom { transform: scale(1.03); }
-
-        /* Custom Utilities */
-        .text-gradient {
-            background: linear-gradient(to right, #f97316, #ef4444);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .img-container { overflow: hidden; }
+        .img-zoom { transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .img-container:hover .img-zoom { transform: scale(1.025); }
     </style>
 </head>
 <body class="antialiased selection:bg-orange-500 selection:text-white">
@@ -134,129 +128,109 @@
     <div class="container mx-auto px-4 py-8 max-w-6xl relative z-10">
         
         <!-- Header Section -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 animate-fade-in-down">
-            <div class="flex items-center gap-4 group cursor-default">
-                <div class="relative">
-                    <div class="absolute inset-0 bg-orange-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
-                    <div class="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl relative z-10 shadow-sm">
-                        <i data-lucide="activity" class="text-orange-500 w-6 h-6"></i>
-                    </div>
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="p-3 bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500 rounded-2xl shadow-lg shadow-orange-500/25 ring-1 ring-white/20">
+                    <i data-lucide="activity" class="text-white w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Mission Control</h1>
-                    <p class="text-slate-500 dark:text-slate-400 text-xs font-medium tracking-[0.2em] uppercase mt-1">Automated Verification System v3.0</p>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Mission Control</h1>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs font-medium tracking-wide uppercase">Automated Verification System</p>
                 </div>
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Theme Toggle -->
-                <button onclick="toggleTheme()" id="theme-btn" class="p-3 rounded-full bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 border border-slate-200 dark:border-slate-800 transition-all duration-300 shadow-sm hover:shadow-md" title="Toggle Theme">
-                    <i data-lucide="sun" id="theme-icon-sun" class="w-5 h-5 hidden dark:block"></i>
-                    <i data-lucide="moon" id="theme-icon-moon" class="w-5 h-5 block dark:hidden"></i>
+                <!-- Fixed Theme Toggle Button -->
+                <button onclick="toggleTheme()" id="theme-btn" class="p-3 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700/80 transition-all duration-200 border border-slate-300/60 dark:border-slate-700/60 shadow-sm active:scale-95" title="Toggle Theme" aria-label="Toggle Theme">
+                    <span class="hidden dark:inline-block text-amber-400">
+                        <i data-lucide="sun" class="w-5 h-5"></i>
+                    </span>
+                    <span class="inline-block dark:hidden text-slate-700">
+                        <i data-lucide="moon" class="w-5 h-5"></i>
+                    </span>
                 </button>
 
                 <!-- Manual Run Button -->
-                <button onclick="triggerManualLogin()" id="run-btn" class="group relative px-6 py-3 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-semibold transition-all duration-300 shadow-lg shadow-slate-500/20 hover:shadow-orange-500/20 flex items-center gap-2 overflow-hidden">
+                <button onclick="triggerManualLogin()" id="run-btn" class="group relative px-5 py-2.5 bg-slate-900 dark:bg-slate-800/90 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-sm font-medium rounded-xl transition-all duration-300 border border-slate-800 dark:border-slate-700/80 hover:border-orange-500/50 flex items-center gap-2 overflow-hidden shadow-lg shadow-slate-900/10 active:scale-95">
                     <span class="relative z-10 flex items-center gap-2">
-                        <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
+                        <i data-lucide="zap" class="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform"></i>
                         Run Manual Sync
                     </span>
-                    <div class="absolute inset-0 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 ease-out opacity-10"></div>
+                    <div class="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/15 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 </button>
             </div>
         </header>
 
         <!-- Main Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Left Column: Stats & Preview (8 cols) -->
-            <div class="lg:col-span-8 space-y-6">
+            <!-- Left Column: Stats & Preview -->
+            <div class="lg:col-span-2 space-y-6">
                 
-                <!-- Top Row: Streak & Mini Status -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Streak Card -->
-                    <div class="md:col-span-2 glass-panel rounded-2xl p-8 relative overflow-hidden group">
-                        <div class="absolute -right-10 -top-10 opacity-5 group-hover:opacity-10 transition-opacity duration-700">
-                            <i data-lucide="flame" class="w-48 h-48 text-orange-500"></i>
-                        </div>
-                        
-                        <div class="relative z-10 flex flex-col h-full justify-between">
-                            <div class="flex justify-between items-start">
-                                <span class="text-slate-500 dark:text-slate-400 uppercase tracking-widest text-xs font-bold">Current Streak</span>
-                                <div id="system-status-badge" class="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                    <span id="system-status-text">Syncing...</span>
-                                </div>
-                            </div>
-                            
-                            <div class="mt-6 flex items-baseline gap-2">
-                                <span id="streak-val" class="text-7xl md:text-8xl font-bold streak-font text-slate-900 dark:text-white glow-text tabular-nums leading-none transition-all duration-300">--</span>
-                                <span class="text-xl text-slate-400 font-medium">days</span>
-                            </div>
-                        </div>
+                <!-- Streak Card -->
+                <div class="glass-panel rounded-3xl p-8 relative overflow-hidden group">
+                    <div class="absolute -right-6 -bottom-6 opacity-5 dark:opacity-10 group-hover:opacity-15 transition-opacity duration-500 pointer-events-none">
+                        <i data-lucide="flame" class="w-48 h-48 text-orange-500"></i>
                     </div>
-
-                    <!-- Mini Info Card -->
-                    <div class="glass-panel rounded-2xl p-6 flex flex-col justify-center items-center text-center border-dashed border-slate-300 dark:border-slate-700/50">
-                        <div class="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-full mb-3">
-                            <i data-lucide="shield-check" class="w-6 h-6 text-blue-500"></i>
+                    
+                    <div class="relative z-10 flex flex-col items-center justify-center text-center">
+                        <span class="text-slate-500 dark:text-slate-400 uppercase tracking-widest text-xs font-bold mb-3">Current Streak</span>
+                        <div class="flex items-baseline gap-2">
+                            <span id="streak-val" class="text-7xl md:text-8xl font-extrabold streak-font bg-clip-text text-transparent bg-gradient-to-b from-orange-400 via-orange-500 to-red-600 glow-text tracking-tight">--</span>
+                            <span class="text-xl font-semibold text-orange-500/90">days</span>
                         </div>
-                        <h3 class="text-slate-900 dark:text-white font-bold text-sm">System Secure</h3>
-                        <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">Protocols Nominal</p>
+                        <div id="system-status-badge" class="mt-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20 shadow-sm">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            <span id="system-status-text">Syncing System...</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Dashboard Preview -->
-                <div class="glass-panel rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-black/40">
-                    <div class="bg-slate-50 dark:bg-slate-950/80 px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
+                <div class="glass-panel rounded-3xl overflow-hidden">
+                    <div class="bg-slate-100/80 dark:bg-slate-900/80 px-5 py-3 border-b border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
                             <div class="flex gap-1.5">
-                                <div class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/30"></div>
-                                <div class="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/30"></div>
-                                <div class="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/30"></div>
+                                <div class="w-3 h-3 rounded-full bg-red-500/30 border border-red-500/60"></div>
+                                <div class="w-3 h-3 rounded-full bg-amber-500/30 border border-amber-500/60"></div>
+                                <div class="w-3 h-3 rounded-full bg-emerald-500/30 border border-emerald-500/60"></div>
                             </div>
-                            <span class="ml-3 text-xs text-slate-500 font-mono select-all">dashboard.interschoolscoding.com/live</span>
+                            <span class="ml-2 text-xs text-slate-500 dark:text-slate-400 font-mono tracking-tight">dashboard.interschoolscoding.com</span>
                         </div>
-                        <button onclick="openImageModal()" class="text-slate-400 hover:text-orange-500 transition-colors">
-                            <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                        <button onclick="openImageModal()" title="Expand view" class="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                            <i data-lucide="maximize-2" class="w-4 h-4 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"></i>
                         </button>
                     </div>
-                    <div class="relative img-container bg-slate-100 dark:bg-slate-900 aspect-video flex items-center justify-center cursor-pointer group" onclick="openImageModal()">
-                        <div id="img-loader" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-50 dark:bg-slate-950">
+                    <div class="relative img-container bg-slate-200/50 dark:bg-slate-950/50 aspect-video flex items-center justify-center cursor-pointer" onclick="openImageModal()">
+                        <div id="img-loader" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-100 dark:bg-slate-900/90 transition-opacity duration-300">
                             <div class="loader-ring mb-3"></div>
-                            <span class="text-xs text-slate-500 font-mono">Establishing Uplink...</span>
+                            <span class="text-xs text-slate-500 font-medium">Fetching live capture...</span>
                         </div>
                         <img id="dashboard-preview" 
                              src="" 
                              alt="Dashboard Capture" 
-                             class="w-full h-full object-cover object-top img-zoom opacity-0 transition-opacity duration-700"
+                             class="w-full h-full object-cover object-top img-zoom opacity-0 transition-opacity duration-500"
                              onload="handleImageLoad(this)"
                              onerror="handleImageError(this)">
-                             
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none flex items-end p-6">
-                            <span class="text-white text-sm font-medium flex items-center gap-2 shadow-black drop-shadow-md">
-                                <i data-lucide="eye" class="w-4 h-4"></i> View Full Capture
-                            </span>
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Logs (4 cols) -->
-            <div class="lg:col-span-4">
-                <div class="glass-panel rounded-2xl flex flex-col h-[600px] lg:h-[calc(100%-1.5rem)]">
-                    <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 rounded-t-2xl">
-                        <h2 class="font-bold text-lg flex items-center gap-2 text-slate-800 dark:text-slate-200">
-                            <i data-lucide="terminal" class="w-5 h-5 text-orange-500"></i>
-                            Mission Logs
+            <!-- Right Column: Logs -->
+            <div class="lg:col-span-1">
+                <div class="glass-panel rounded-3xl h-full flex flex-col max-h-[600px] overflow-hidden">
+                    <div class="p-5 border-b border-slate-200/60 dark:border-slate-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/40">
+                        <h2 class="font-semibold text-base flex items-center gap-2.5 text-slate-900 dark:text-white">
+                            <i data-lucide="scroll-text" class="w-4 h-4 text-blue-500 dark:text-blue-400"></i>
+                            Execution Logs
                         </h2>
-                        <span class="text-[10px] uppercase tracking-wider text-slate-500 font-mono" id="last-updated">Waiting...</span>
+                        <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500" id="last-updated">Updated just now</span>
                     </div>
                     
-                    <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar" id="log-container">
-                        <div class="flex flex-col items-center justify-center h-full text-slate-400">
-                            <div class="loader-ring mb-3 border-slate-300 dark:border-slate-700 border-t-orange-500"></div>
-                            <span class="text-xs font-mono">Decrypting history...</span>
+                    <div class="flex-1 overflow-y-auto p-4 space-y-2.5" id="log-container">
+                        <div class="flex flex-col items-center justify-center h-48 text-slate-400">
+                            <div class="loader-ring mb-3"></div>
+                            <span class="text-xs font-medium">Syncing history...</span>
                         </div>
                     </div>
                 </div>
@@ -264,193 +238,42 @@
 
         </div>
         
-        <footer class="mt-16 border-t border-slate-200 dark:border-slate-800 pt-8 text-center">
-            <p class="text-slate-400 dark:text-slate-600 text-xs font-mono">&copy; 2026 INTERSCHOOL CODING AUTOMATION // ENCRYPTED CONNECTION</p>
+        <footer class="mt-12 text-center text-slate-400 dark:text-slate-600 text-xs font-medium">
+            <p>&copy; 2026 Interschool Coding Automation. All systems nominal.</p>
         </footer>
     </div>
 
     <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-24 opacity-0 transition-all duration-500 z-50 pointer-events-none">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-5 py-4 rounded-xl shadow-2xl flex items-center gap-4 min-w-[300px]">
-            <div class="p-2 bg-orange-500/10 rounded-lg">
-                <i data-lucide="radio" class="text-orange-500 w-5 h-5"></i>
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 ease-out z-50 pointer-events-none">
+        <div class="bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-700/80 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3.5">
+            <div class="p-2 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/20">
+                <i data-lucide="info" class="w-5 h-5"></i>
             </div>
-            <div>
-                <p class="font-bold text-sm">Signal Transmitted</p>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Workflow initiated via GitHub Actions.</p>
+            <div class="text-xs">
+                <p class="font-bold text-sm text-slate-100">Workflow Triggered</p>
+                <p class="text-slate-400">Check GitHub Actions for progress.</p>
             </div>
         </div>
     </div>
 
-    <!-- Generic Image Lightbox Modal -->
-    <div id="img-modal" class="fixed inset-0 z-[60] bg-white/90 dark:bg-black/90 backdrop-blur-xl hidden items-center justify-center p-4 transition-all duration-300" onclick="closeImageModal()">
-        <div class="relative max-w-5xl w-full bg-transparent rounded-2xl overflow-hidden" onclick="event.stopPropagation()">
-            <button onclick="closeImageModal()" class="absolute -top-12 right-0 text-slate-400 hover:text-orange-500 transition-colors">
-                <i data-lucide="x" class="w-8 h-8"></i>
-            </button>
-            <img id="modal-img" src="" class="w-full h-auto max-h-[85vh] object-contain rounded-lg shadow-2xl">
-        </div>
-    </div>
-
-    <!-- EASTER EGG MODAL -->
-    <div id="creator-modal" class="fixed inset-0 z-[70] bg-white/95 dark:bg-black/95 backdrop-blur-2xl hidden items-center justify-center p-4 opacity-0 transition-opacity duration-500" onclick="closeCreatorModal()">
-        <div class="relative max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-orange-500/30 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(249,115,22,0.1)] dark:shadow-[0_0_50px_rgba(249,115,22,0.2)] transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()" id="creator-card">
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent"></div>
-            
-            <div class="p-8 flex flex-col items-center text-center">
-                <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-slate-100 dark:border-slate-800 mb-6 shadow-xl">
-                    <img src="https://photos.app.goo.gl/ssDKMt6Ao2YUkLzR6" alt="Creator" class="w-full h-full object-cover">
-                </div>
-                
-                <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2 streak-font">System Architect</h2>
-                <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">You found the hidden signature.</p>
-                
-                <div class="w-full bg-slate-50 dark:bg-slate-950/50 rounded-lg p-4 border border-slate-200 dark:border-slate-800 mb-6">
-                    <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Direct Contact</p>
-                    <a href="mailto:delishbyarugaba@gmail.com" class="text-orange-600 dark:text-orange-400 hover:text-orange-500 font-mono text-sm transition-colors break-all">
-                        delishbyarugaba@gmail.com
-                    </a>
-                </div>
-                
-                <button onclick="closeCreatorModal()" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 uppercase tracking-widest transition-colors">
-                    Close Transmission
-                </button>
+    <!-- Image Lightbox Modal -->
+    <div id="img-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-5xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="p-4 bg-slate-100/80 dark:bg-slate-800/80 flex justify-between items-center border-b border-slate-200/60 dark:border-slate-800">
+                <span class="text-xs text-slate-600 dark:text-slate-300 font-mono">Live Capture Preview</span>
+                <button onclick="closeImageModal()" class="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="bg-slate-950 p-2 flex items-center justify-center">
+                <img id="modal-img" src="" class="w-full h-auto max-h-[80vh] object-contain rounded-xl">
             </div>
         </div>
     </div>
 
     <script>
+        // Init Lucide Icons
         lucide.createIcons();
 
-        // --- Core Functionality (Strictly No Mock Data) ---
-
-        async function fetchLogs() {
-            const logContainer = document.getElementById('log-container');
-            const streakEl = document.getElementById('streak-val');
-            const statusBadge = document.getElementById('system-status-badge');
-            const statusText = document.getElementById('system-status-text');
-            const lastUpdatedEl = document.getElementById('last-updated');
-            
-            try {
-                const response = await fetch('logs.json?t=' + new Date().getTime());
-                if (!response.ok) throw new Error("Network response was not ok");
-                const data = await response.json();
-
-                if(data.streak !== undefined) {
-                    animateValue(streakEl, parseInt(streakEl.innerText) || 0, data.streak, 1500);
-                } else {
-                    streakEl.innerText = "0";
-                }
-
-                const imgEl = document.getElementById('dashboard-preview');
-                const cacheBuster = 'dashboard.png?t=' + new Date().getTime();
-                imgEl.src = cacheBuster;
-                document.getElementById('modal-img').src = cacheBuster;
-
-                logContainer.innerHTML = '';
-                
-                if (!data.history || data.history.length === 0) {
-                    logContainer.innerHTML = '<div class="text-center text-slate-500 py-4 font-mono text-xs">NO_DATA_STREAM</div>';
-                    return;
-                }
-
-                // Dynamic Status Badge Check
-                const latestRun = data.history[0];
-                if (latestRun.passed !== false) {
-                    statusBadge.className = "flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20";
-                    statusBadge.innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div><span>SYSTEM ONLINE</span>`;
-                } else {
-                    statusBadge.className = "flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20";
-                    statusBadge.innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div><span>ANOMALY DETECTED</span>`;
-                }
-
-                data.history.forEach((entry, index) => {
-                    const dateObj = new Date(entry.timestamp);
-                    const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
-                    
-                    const item = document.createElement('div');
-                    item.className = `p-3 rounded-lg border transition-all duration-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 group ${entry.passed !== false ? 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/30' : 'border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-950/10'}`;
-                    item.style.opacity = '0';
-                    item.style.transform = 'translateX(-10px)';
-                    
-                    const isPassed = entry.passed !== false;
-                    const icon = isPassed ? 'check-circle-2' : 'alert-octagon';
-                    const colorClass = isPassed ? 'text-emerald-500' : 'text-red-500';
-                    
-                    item.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <div class="flex gap-3 items-center">
-                                <div class="p-1.5 rounded bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"><i data-lucide="${icon}" class="w-3.5 h-3.5 ${colorClass}"></i></div>
-                                <div>
-                                    <div class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">${entry.status}</div>
-                                    <div class="text-[10px] text-slate-500 font-mono mt-0.5">${dateStr} // ${timeStr}</div>
-                                </div>
-                            </div>
-                            <span class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${isPassed ? 'border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' : 'border-red-500/20 text-red-600 dark:text-red-400 bg-red-500/5'}">
-                                ${isPassed ? 'OK' : 'ERR'}
-                            </span>
-                        </div>
-                    `;
-                    
-                    logContainer.appendChild(item);
-
-                    gsap.to(item, {
-                        opacity: 1,
-                        x: 0,
-                        duration: 0.4,
-                        delay: index * 0.05,
-                        ease: "power2.out"
-                    });
-                });
-
-                lastUpdatedEl.innerText = 'LAST SYNC: ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second:'2-digit' });
-                lucide.createIcons();
-
-            } catch (err) {
-                console.error(err);
-                logContainer.innerHTML = `<div class="text-red-500 text-center py-4 font-mono text-xs">CONNECTION_FAILED<br><span class="text-slate-400">Check logs.json availability</span></div>`;
-                streakEl.innerText = "-";
-            }
-        }
-
-        function handleImageLoad(img) {
-            const loader = document.getElementById('img-loader');
-            if(loader) {
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 300);
-            }
-            img.classList.remove('opacity-0');
-        }
-
-        function handleImageError(img) {
-            const loader = document.getElementById('img-loader');
-            if(loader) {
-                loader.innerHTML = `
-                    <div class="text-center p-4">
-                        <i data-lucide="wifi-off" class="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-2"></i>
-                        <span class="text-[10px] text-slate-400 font-mono uppercase">Signal Lost</span>
-                    </div>
-                `;
-                lucide.createIcons();
-            }
-        }
-
-        function animateValue(obj, start, end, duration) {
-            if (start === end) { obj.innerHTML = end; return; }
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerHTML = Math.floor(progress * (end - start) + start);
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                }
-            };
-            window.requestAnimationFrame(step);
-        }
-
-        // --- Theme Logic ---
+        // Theme Toggle Logic
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'light' || (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches)) {
@@ -471,27 +294,147 @@
             lucide.createIcons();
         }
 
-        // --- Interaction Logic ---
+        async function fetchLogs() {
+            const logContainer = document.getElementById('log-container');
+            const streakEl = document.getElementById('streak-val');
+            const statusBadge = document.getElementById('system-status-badge');
+            const statusText = document.getElementById('system-status-text');
+            const lastUpdatedEl = document.getElementById('last-updated');
+            
+            try {
+                const response = await fetch('logs.json?t=' + new Date().getTime());
+                const data = await response.json();
+
+                if(data.streak !== undefined) {
+                    animateValue(streakEl, parseInt(streakEl.innerText) || 0, data.streak, 1000);
+                } else {
+                    streakEl.innerText = "0";
+                }
+
+                const imgEl = document.getElementById('dashboard-preview');
+                const cacheBuster = 'dashboard.png?t=' + new Date().getTime();
+                imgEl.src = cacheBuster;
+                document.getElementById('modal-img').src = cacheBuster;
+
+                logContainer.innerHTML = '';
+                
+                if (!data.history || data.history.length === 0) {
+                    logContainer.innerHTML = '<div class="text-center text-slate-500 py-8 text-xs font-medium">No logs available</div>';
+                    return;
+                }
+
+                // Dynamic Status Badge Check
+                const latestRun = data.history[0];
+                if (latestRun.passed !== false) {
+                    statusBadge.className = "mt-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20 shadow-sm";
+                    statusBadge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i><span>System Active</span>`;
+                } else {
+                    statusBadge.className = "mt-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-500/10 px-4 py-1.5 rounded-full border border-red-500/20 shadow-sm";
+                    statusBadge.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4"></i><span>Last Check Failed</span>`;
+                }
+
+                data.history.forEach((entry, index) => {
+                    const dateObj = new Date(entry.timestamp);
+                    const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    
+                    const item = document.createElement('div');
+                    const isPassed = entry.passed !== false;
+                    
+                    item.className = `p-3.5 rounded-2xl border transition-all duration-300 hover:scale-[1.01] ${
+                        isPassed 
+                            ? 'border-slate-200/80 dark:border-slate-800/80 bg-slate-100/40 dark:bg-slate-800/30' 
+                            : 'border-red-500/20 dark:border-red-900/30 bg-red-500/5 dark:bg-red-950/20'
+                    }`;
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(10px)';
+                    
+                    const icon = isPassed ? 'check-circle-2' : 'alert-circle';
+                    const colorClass = isPassed ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400';
+                    
+                    item.innerHTML = `
+                        <div class="flex justify-between items-start gap-2">
+                            <div class="flex gap-3 items-start">
+                                <div class="mt-0.5 p-1 rounded-lg ${isPassed ? 'bg-emerald-500/10' : 'bg-red-500/10'}">
+                                    <i data-lucide="${icon}" class="w-4 h-4 ${colorClass}"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">${entry.status}</div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">${dateStr} • ${timeStr}</div>
+                                </div>
+                            </div>
+                            <span class="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-md ${
+                                isPassed 
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
+                                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                            }">
+                                ${isPassed ? 'PASSED' : 'FAILED'}
+                            </span>
+                        </div>
+                    `;
+                    
+                    logContainer.appendChild(item);
+
+                    gsap.to(item, {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.4,
+                        delay: index * 0.03,
+                        ease: "power2.out"
+                    });
+                });
+
+                lastUpdatedEl.innerText = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                lucide.createIcons();
+
+            } catch (err) {
+                console.error(err);
+                logContainer.innerHTML = `<div class="text-red-500 dark:text-red-400 text-center py-6 text-xs font-medium">Error loading logs.<br><span class="text-slate-400 font-normal">Please ensure logs.json exists.</span></div>`;
+                streakEl.innerText = "-";
+            }
+        }
+
+        function handleImageLoad(img) {
+            const loader = document.getElementById('img-loader');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 300);
+            img.classList.remove('opacity-0');
+        }
+
+        function handleImageError(img) {
+            const loader = document.getElementById('img-loader');
+            loader.innerHTML = `
+                <div class="text-center p-4">
+                    <i data-lucide="image-off" class="w-7 h-7 text-slate-400 mx-auto mb-2 opacity-60"></i>
+                    <span class="text-xs text-slate-400 font-medium">Preview Unavailable</span>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function animateValue(obj, start, end, duration) {
+            if (start === end) { obj.innerHTML = end; return; }
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
 
         function triggerManualLogin() {
-            // Easter Egg Trigger #2: Over-clicking
-            if (!window.clickCount) window.clickCount = 0;
-            window.clickCount++;
-            
-            if (window.clickCount > 5) {
-                showEasterEgg();
-                window.clickCount = 0;
-                return;
-            }
-
             const btn = document.getElementById('run-btn');
             const originalContent = btn.innerHTML;
             
             btn.disabled = true;
-            btn.innerHTML = `<div class="loader-ring w-4 h-4 border-white/30 border-t-white dark:border-slate-900/30 dark:border-t-slate-900"></div> <span class="ml-2">Initiating...</span>`;
+            btn.innerHTML = `<div class="loader-ring w-4 h-4 border-white/30 border-t-white"></div> <span class="ml-2">Triggering...</span>`;
             
             const toast = document.getElementById('toast');
-            toast.classList.remove('translate-y-24', 'opacity-0');
+            toast.classList.remove('translate-y-20', 'opacity-0');
             
             setTimeout(() => {
                 btn.disabled = false;
@@ -499,20 +442,17 @@
                 lucide.createIcons();
                 
                 setTimeout(() => {
-                    toast.classList.add('translate-y-24', 'opacity-0');
+                    toast.classList.add('translate-y-20', 'opacity-0');
                 }, 3000);
                 
                 alert("To run the login on-demand directly from GitHub:\n\n1. Go to your GitHub Repository -> Actions tab.\n2. Select 'Daily Login Automation'.\n3. Click 'Run workflow'.");
             }, 1500);
         }
 
-        // --- Modals ---
-
         function openImageModal() {
             const modal = document.getElementById('img-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            gsap.fromTo("#modal-img", {scale: 0.95, opacity: 0}, {scale: 1, opacity: 1, duration: 0.3});
         }
 
         function closeImageModal() {
@@ -521,53 +461,11 @@
             modal.classList.remove('flex');
         }
 
-        // --- Easter Egg Logic ---
-
-        function showEasterEgg() {
-            const modal = document.getElementById('creator-modal');
-            const card = document.getElementById('creator-card');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
-                card.classList.remove('scale-95');
-                card.classList.add('scale-100');
-            });
-        }
-
-        function closeCreatorModal() {
-            const modal = document.getElementById('creator-modal');
-            const card = document.getElementById('creator-card');
-            modal.classList.add('opacity-0');
-            card.classList.add('scale-95');
-            card.classList.remove('scale-100');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 300);
-        }
-
-        // Easter Egg Trigger #1: Typing "- creator"
-        let keyBuffer = "";
-        document.addEventListener('keydown', (e) => {
-            keyBuffer += e.key;
-            if (keyBuffer.length > 20) keyBuffer = keyBuffer.slice(-20);
-            
-            if (keyBuffer.toLowerCase().includes("- creator")) {
-                keyBuffer = ""; 
-                showEasterEgg();
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             fetchLogs();
+            // Refresh dashboard data automatically every 30 seconds
             setInterval(fetchLogs, 30000);
-            
-            gsap.from("header", {y: -20, opacity: 0, duration: 0.8, ease: "power3.out"});
-            gsap.from(".glass-panel", {y: 20, opacity: 0, duration: 0.8, stagger: 0.1, ease: "power3.out", delay: 0.2});
         });
     </script>
 </body>
