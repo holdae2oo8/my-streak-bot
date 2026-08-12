@@ -97,7 +97,7 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.3); border-radius: 999px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.5); }
@@ -140,7 +140,6 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- Fixed Theme Toggle Button -->
                 <button onclick="toggleTheme()" id="theme-btn" class="p-3 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700/80 transition-all duration-200 border border-slate-300/60 dark:border-slate-700/60 shadow-sm active:scale-95" title="Toggle Theme" aria-label="Toggle Theme">
                     <span class="hidden dark:inline-block text-amber-400">
                         <i data-lucide="sun" class="w-5 h-5"></i>
@@ -150,7 +149,6 @@
                     </span>
                 </button>
 
-                <!-- Manual Run Button -->
                 <button onclick="triggerManualLogin()" id="run-btn" class="group relative px-5 py-2.5 bg-slate-900 dark:bg-slate-800/90 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-sm font-medium rounded-xl transition-all duration-300 border border-slate-800 dark:border-slate-700/80 hover:border-orange-500/50 flex items-center gap-2 overflow-hidden shadow-lg shadow-slate-900/10 active:scale-95">
                     <span class="relative z-10 flex items-center gap-2">
                         <i data-lucide="zap" class="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform"></i>
@@ -164,7 +162,7 @@
         <!-- Main Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Left Column: Stats & Preview -->
+            <!-- Left Column: Stats & Step Captures -->
             <div class="lg:col-span-2 space-y-6">
                 
                 <!-- Streak Card -->
@@ -186,7 +184,7 @@
                     </div>
                 </div>
 
-                <!-- Dashboard Interactive Frame Preview -->
+                <!-- Dashboard Preview & Multi-Step Flow -->
                 <div class="glass-panel rounded-3xl overflow-hidden">
                     <div class="bg-slate-100/80 dark:bg-slate-900/80 px-5 py-3 border-b border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
@@ -195,21 +193,22 @@
                                 <div class="w-3 h-3 rounded-full bg-amber-500/30 border border-amber-500/60"></div>
                                 <div class="w-3 h-3 rounded-full bg-emerald-500/30 border border-emerald-500/60"></div>
                             </div>
-                            <span id="frame-url-label" class="ml-2 text-xs text-slate-500 dark:text-slate-400 font-mono tracking-tight">dashboard.interschoolscoding.com</span>
+                            <span id="frame-url-label" class="ml-2 text-xs text-slate-500 dark:text-slate-400 font-mono tracking-tight truncate max-w-[280px] sm:max-w-none">
+                                dashboard.interschoolscoding.com/home/dashboard/student
+                            </span>
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <!-- View Toggle Mode Button -->
                             <div class="flex bg-slate-200/60 dark:bg-slate-800/60 p-1 rounded-xl text-xs">
                                 <button id="btn-mode-iframe" onclick="setViewMode('iframe')" class="px-2.5 py-1 rounded-lg font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm transition-all flex items-center gap-1">
                                     <i data-lucide="globe" class="w-3.5 h-3.5"></i> Live
                                 </button>
                                 <button id="btn-mode-img" onclick="setViewMode('img')" class="px-2.5 py-1 rounded-lg font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center gap-1">
-                                    <i data-lucide="image" class="w-3.5 h-3.5"></i> Capture
+                                    <i data-lucide="camera" class="w-3.5 h-3.5"></i> Captures
                                 </button>
                             </div>
 
-                            <button onclick="reloadPreview()" title="Reload Frame" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                            <button onclick="reloadPreview()" title="Reload Preview" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
                                 <i data-lucide="rotate-cw" class="w-4 h-4 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"></i>
                             </button>
                             <button onclick="openImageModal()" title="Expand view" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
@@ -221,24 +220,49 @@
                     <div class="relative img-container bg-slate-200/50 dark:bg-slate-950/50 aspect-video flex items-center justify-center">
                         <div id="img-loader" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-100 dark:bg-slate-900/90 transition-opacity duration-300 pointer-events-none">
                             <div class="loader-ring mb-3"></div>
-                            <span class="text-xs text-slate-500 font-medium">Connecting to application view...</span>
+                            <span class="text-xs text-slate-500 font-medium">Loading target dashboard...</span>
                         </div>
 
-                        <!-- Live Interactive iframe -->
+                        <!-- Live Interactive Frame -->
                         <iframe id="live-iframe" 
-                                src="https://dashboard.interschoolscoding.com" 
+                                src="https://dashboard.interschoolscoding.com/home/dashboard/student" 
                                 class="w-full h-full border-0 relative z-10" 
                                 onload="handleIframeLoad()" 
                                 onerror="handleIframeError()"></iframe>
 
-                        <!-- Static Capture Fallback -->
+                        <!-- Final Success Screen Screenshot -->
                         <img id="dashboard-preview" 
                              src="" 
-                             alt="Dashboard Capture" 
+                             alt="Student Dashboard Capture" 
                              class="hidden w-full h-full object-cover object-top img-zoom opacity-0 transition-opacity duration-500 relative z-10 cursor-pointer"
                              onclick="openImageModal()"
                              onload="handleImageLoad(this)"
                              onerror="handleImageError(this)">
+                    </div>
+
+                    <!-- Step Captures Timeline Bar -->
+                    <div id="steps-timeline" class="p-4 bg-slate-100/50 dark:bg-slate-900/50 border-t border-slate-200/60 dark:border-slate-800/80">
+                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <i data-lucide="layers" class="w-4 h-4 text-orange-500"></i> Execution Sequence Captures (4 Steps)
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div class="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 aspect-video cursor-pointer" onclick="switchStepPreview('step_1.png', 'Step 1: Login Page')">
+                                <img id="thumb-step-1" src="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80 group-hover:opacity-100">
+                                <span class="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-md">1. Portal Load</span>
+                            </div>
+                            <div class="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 aspect-video cursor-pointer" onclick="switchStepPreview('step_2.png', 'Step 2: Credentials Entered')">
+                                <img id="thumb-step-2" src="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80 group-hover:opacity-100">
+                                <span class="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-md">2. Credentials</span>
+                            </div>
+                            <div class="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 aspect-video cursor-pointer" onclick="switchStepPreview('step_3.png', 'Step 3: Submission')">
+                                <img id="thumb-step-3" src="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80 group-hover:opacity-100">
+                                <span class="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-md">3. Auth Submit</span>
+                            </div>
+                            <div class="group relative rounded-xl overflow-hidden border border-orange-500/50 bg-slate-950 aspect-video cursor-pointer ring-1 ring-orange-500/30" onclick="switchStepPreview('dashboard.png', 'Step 4: Student Dashboard Success')">
+                                <img id="thumb-step-4" src="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100">
+                                <span class="absolute bottom-1.5 left-1.5 bg-orange-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">4. Student Dashboard</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -266,11 +290,11 @@
         </div>
         
         <footer class="mt-12 text-center text-slate-400 dark:text-slate-600 text-xs font-medium">
-            <p>&copy; 2026 Interschool Coding Automation. All systems nominal.</p>
+            <p>&copy; Delish Byarugaba Auto-Streak Keeper | Holbey.</p>
         </footer>
     </div>
 
-    <!-- Notification Toast -->
+    <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 ease-out z-50 pointer-events-none">
         <div class="bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-700/80 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3.5">
             <div class="p-2 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/20">
@@ -283,11 +307,11 @@
         </div>
     </div>
 
-    <!-- Image / Preview Lightbox Modal -->
+    <!-- Image Lightbox Modal -->
     <div id="img-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4" onclick="closeImageModal()">
         <div class="relative max-w-5xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl" onclick="event.stopPropagation()">
             <div class="p-4 bg-slate-100/80 dark:bg-slate-800/80 flex justify-between items-center border-b border-slate-200/60 dark:border-slate-800">
-                <span class="text-xs text-slate-600 dark:text-slate-300 font-mono">Live Capture Preview</span>
+                <span id="modal-title" class="text-xs text-slate-600 dark:text-slate-300 font-mono">Live Capture Preview</span>
                 <button onclick="closeImageModal()" class="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="bg-slate-950 p-2 flex items-center justify-center">
@@ -297,14 +321,11 @@
     </div>
 
     <script>
-        // Target site URL definition
-        const TARGET_APP_URL = "https://dashboard.interschoolscoding.com";
+        const TARGET_STUDENT_URL = "https://dashboard.interschoolscoding.com/home/dashboard/student";
         let activeViewMode = 'iframe';
 
-        // Init Lucide Icons
         lucide.createIcons();
 
-        // Theme Toggle Logic
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'light' || (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches)) {
@@ -331,18 +352,15 @@
             const img = document.getElementById('dashboard-preview');
             const btnIframe = document.getElementById('btn-mode-iframe');
             const btnImg = document.getElementById('btn-mode-img');
-            const loader = document.getElementById('img-loader');
 
             if (mode === 'iframe') {
                 img.classList.add('hidden');
                 iframe.classList.remove('hidden');
-                
                 btnIframe.className = "px-2.5 py-1 rounded-lg font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm transition-all flex items-center gap-1";
                 btnImg.className = "px-2.5 py-1 rounded-lg font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center gap-1";
             } else {
                 iframe.classList.add('hidden');
                 img.classList.remove('hidden');
-
                 btnImg.className = "px-2.5 py-1 rounded-lg font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm transition-all flex items-center gap-1";
                 btnIframe.className = "px-2.5 py-1 rounded-lg font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center gap-1";
                 
@@ -353,18 +371,35 @@
             lucide.createIcons();
         }
 
+        function switchStepPreview(filename, label) {
+            setViewMode('img');
+            const cacheBuster = filename + '?t=' + new Date().getTime();
+            const img = document.getElementById('dashboard-preview');
+            img.src = cacheBuster;
+            document.getElementById('modal-img').src = cacheBuster;
+            document.getElementById('modal-title').innerText = label;
+        }
+
         function reloadPreview() {
             const loader = document.getElementById('img-loader');
             loader.style.display = 'flex';
             loader.style.opacity = '1';
 
+            const t = new Date().getTime();
             if (activeViewMode === 'iframe') {
-                const iframe = document.getElementById('live-iframe');
-                iframe.src = TARGET_APP_URL + '?t=' + new Date().getTime();
+                document.getElementById('live-iframe').src = TARGET_STUDENT_URL + '?t=' + t;
             } else {
-                const img = document.getElementById('dashboard-preview');
-                img.src = 'dashboard.png?t=' + new Date().getTime();
+                document.getElementById('dashboard-preview').src = 'dashboard.png?t=' + t;
             }
+            loadStepThumbnails();
+        }
+
+        function loadStepThumbnails() {
+            const t = new Date().getTime();
+            document.getElementById('thumb-step-1').src = 'step_1.png?t=' + t;
+            document.getElementById('thumb-step-2').src = 'step_2.png?t=' + t;
+            document.getElementById('thumb-step-3').src = 'step_3.png?t=' + t;
+            document.getElementById('thumb-step-4').src = 'dashboard.png?t=' + t;
         }
 
         function handleIframeLoad() {
@@ -374,7 +409,6 @@
         }
 
         function handleIframeError() {
-            // If the application site blocks iframe embedding (X-Frame-Options/CORS), gracefully fallback to screenshot capture mode
             setViewMode('img');
         }
 
@@ -394,9 +428,7 @@
                     streakEl.innerText = "0";
                 }
 
-                const cacheBuster = 'dashboard.png?t=' + new Date().getTime();
-                document.getElementById('dashboard-preview').src = cacheBuster;
-                document.getElementById('modal-img').src = cacheBuster;
+                loadStepThumbnails();
 
                 logContainer.innerHTML = '';
                 
@@ -405,7 +437,6 @@
                     return;
                 }
 
-                // Dynamic Status Badge Check
                 const latestRun = data.history[0];
                 if (latestRun.passed !== false) {
                     statusBadge.className = "mt-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20 shadow-sm";
@@ -471,7 +502,7 @@
 
             } catch (err) {
                 console.error(err);
-                logContainer.innerHTML = `<div class="text-red-500 dark:text-red-400 text-center py-6 text-xs font-medium">Error loading logs.<br><span class="text-slate-400 font-normal">Please ensure logs.json exists.</span></div>`;
+                logContainer.innerHTML = `<div class="text-red-500 dark:text-red-400 text-center py-6 text-xs font-medium">Error loading logs.</div>`;
                 streakEl.innerText = "-";
             }
         }
@@ -491,7 +522,7 @@
                 loader.innerHTML = `
                     <div class="text-center p-4">
                         <i data-lucide="image-off" class="w-7 h-7 text-slate-400 mx-auto mb-2 opacity-60"></i>
-                        <span class="text-xs text-slate-400 font-medium">Preview Unavailable</span>
+                        <span class="text-xs text-slate-400 font-medium">Capture Pending / Unavailable</span>
                     </div>
                 `;
                 lucide.createIcons();
@@ -550,7 +581,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             fetchLogs();
-            // Refresh dashboard data automatically every 30 seconds
             setInterval(fetchLogs, 30000);
         });
     </script>
