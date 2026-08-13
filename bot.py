@@ -64,7 +64,7 @@ async def run_bot():
         context = await browser.new_context(viewport={"width": 1440, "height": 900})
         page = await context.new_page()
         
-        # Set default navigation timeout to 60 seconds (60,000 ms)
+        # Set generous default timeouts
         page.set_default_navigation_timeout(60000)
         page.set_default_timeout(60000)
 
@@ -73,7 +73,7 @@ async def run_bot():
             # STEP 1: Login Page
             # ----------------------------------------------------
             print("Step 1: Navigating to login page...")
-            await page.goto(LOGIN_URL, wait_until="networkidle", timeout=60000)
+            await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
             await page.screenshot(path="step_1.png")
             steps_taken.append({"step": 1, "label": "Login Page", "file": "step_1.png"})
 
@@ -95,19 +95,24 @@ async def run_bot():
             try:
                 await page.wait_for_selector("text=Login successful", timeout=10000)
             except Exception:
-                await page.wait_for_timeout(1000)
+                await page.wait_for_timeout(2000)
                 
             await page.screenshot(path="step_3.png")
             steps_taken.append({"step": 3, "label": "Successful Login Notification", "file": "step_3.png"})
 
             # ----------------------------------------------------
-            # STEP 4: Wait Specifically for Student Dashboard URL
+            # STEP 4: Fallback Navigation & Dashboard Capture
             # ----------------------------------------------------
-            print(f"Step 4: Waiting for URL: {TARGET_URL}...")
-            await page.wait_for_url(TARGET_URL, timeout=60000)
-            
-            # Additional wait to let all dashboard cards and stats load completely
-            await page.wait_for_load_state("networkidle", timeout=60000)
+            print("Step 4: Waiting for Student Dashboard...")
+            try:
+                # First try waiting for auto-redirect
+                await page.wait_for_url("**/dashboard/**", timeout=20000)
+            except Exception:
+                # If auto-redirect hangs, directly navigate to target URL
+                print(f"Auto-redirect timed out. Forcing direct navigation to {TARGET_URL}...")
+                await page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=30000)
+
+            await page.wait_for_timeout(3000)  # Short pause to render UI components
             await page.screenshot(path="dashboard.png")
             steps_taken.append({"step": 4, "label": "Student Dashboard", "file": "dashboard.png"})
 
