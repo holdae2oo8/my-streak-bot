@@ -51,3 +51,12 @@ jobs:
           # Commit and push only if there are actual changes
           git diff --staged --quiet || git commit -m "chore: update daily screenshots and logs [skip ci]"
           git push origin main
+
+      - name: Upload Logs & Screenshots as Artifacts
+        if: always() # Uploads output files regardless of script pass/fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-run-artifacts
+          path: |
+            *.png
+            logs.json
