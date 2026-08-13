@@ -7,7 +7,6 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" href="https://pin.it/1A6MCBN1f" type="image/x-icon">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -19,6 +18,11 @@
                             500: '#f97316',
                             600: '#ea580c',
                         }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                        display: ['Space Grotesk', 'sans-serif']
                     }
                 }
             }
@@ -28,6 +32,7 @@
     <!-- Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.16/index.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.16/index.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.16/index.min.css" rel="stylesheet">
     
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -38,251 +43,307 @@
     <style>
         :root {
             --bg-color: #f8fafc;
-            --card-bg: rgba(255, 255, 255, 0.75);
-            --border-color: rgba(0, 0, 0, 0.08);
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(0, 0, 0, 0.06);
             --text-main: #0f172a;
             --text-sub: #64748b;
-            --glow: rgba(249, 115, 22, 0.15);
+            --accent-glow: rgba(249, 115, 22, 0.15);
         }
 
         .dark {
-            --bg-color: #0b0f17;
-            --card-bg: rgba(15, 23, 42, 0.65);
-            --border-color: rgba(255, 255, 255, 0.08);
+            --bg-color: #020617;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --border-color: rgba(255, 255, 255, 0.06);
             --text-main: #f1f5f9;
             --text-sub: #94a3b8;
-            --glow: rgba(249, 115, 22, 0.25);
+            --accent-glow: rgba(249, 115, 22, 0.2);
         }
 
         body {
-            font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             overflow-x: hidden;
             min-height: 100vh;
-            transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
 
-        h1, h2, h3, .streak-font {
-            font-family: 'Space Grotesk', sans-serif;
-        }
-
-        .mesh-gradient {
+        /* Ambient Background */
+        .ambient-light {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
             z-index: -1;
+            pointer-events: none;
             background: 
-                radial-gradient(circle at 15% 15%, rgba(249, 115, 22, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 85% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
-            filter: blur(40px);
-            animation: meshMove 18s ease-in-out infinite alternate;
+                radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+            filter: blur(60px);
         }
 
-        @keyframes meshMove {
-            0% { transform: scale(1) translate(0, 0); }
-            50% { transform: scale(1.08) translate(-10px, 15px); }
-            100% { transform: scale(1.03) translate(10px, -10px); }
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: linear-gradient(var(--border-color) 1px, transparent 1px),
+                              linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
         }
 
-        .glass-panel {
+        /* Glassmorphism Cards */
+        .glass-card {
             background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-color);
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
-            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
-        .dark .glass-panel {
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        .glass-card:hover {
+            border-color: rgba(249, 115, 22, 0.3);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
+        .dark .glass-card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.3); border-radius: 999px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.2); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.4); }
 
-        .glow-text { 
-            text-shadow: 0 0 30px var(--glow); 
+        /* Animations */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px var(--accent-glow); }
+            50% { box-shadow: 0 0 25px var(--accent-glow); }
+        }
+
+        .streak-number {
+            background: linear-gradient(to bottom, #fb923c, #ea580c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px var(--accent-glow));
         }
 
         .loader-ring {
-            display: inline-block;
-            width: 20px; height: 20px;
-            border: 2px solid rgba(249, 115, 22, 0.2);
-            border-radius: 50%;
+            width: 24px; height: 24px;
+            border: 2px solid rgba(249, 115, 22, 0.1);
             border-top-color: #f97316;
+            border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .img-container { overflow: hidden; }
-        .img-zoom { transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-        .img-container:hover .img-zoom { transform: scale(1.025); }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            position: relative;
+        }
+        .status-dot::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px solid currentColor;
+            opacity: 0.3;
+            animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes ping {
+            75%, 100% { transform: scale(2); opacity: 0; }
+        }
+
+        /* Image Zoom Effect */
+        .img-zoom-container { overflow: hidden; }
+        .img-zoom { transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+        .img-zoom-container:hover .img-zoom { transform: scale(1.03); }
     </style>
 </head>
-<body class="antialiased selection:bg-orange-500 selection:text-white">
+<body class="antialiased selection:bg-orange-500/30 selection:text-orange-200 font-sans">
 
-    <div class="mesh-gradient"></div>
+    <div class="ambient-light"></div>
+    <div class="grid-overlay"></div>
 
-    <div class="container mx-auto px-4 py-8 max-w-6xl relative z-10">
+    <div class="container mx-auto px-4 py-8 max-w-7xl relative z-10">
         
-        <!-- Header Section -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <div class="flex items-center gap-3.5">
-                <div class="p-3 bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500 rounded-2xl shadow-lg shadow-orange-500/25 ring-1 ring-white/20">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+            <div class="flex items-center gap-4 group cursor-default">
+                <div class="relative p-3 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-all duration-300">
                     <i data-lucide="activity" class="text-white w-6 h-6"></i>
+                    <div class="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Mission Control</h1>
-                    <p class="text-slate-500 dark:text-slate-400 text-xs font-medium tracking-wide uppercase">Automated Verification System</p>
+                    <h1 class="text-2xl font-display font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                        Mission Control
+                        <span class="px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-bold uppercase tracking-wider border border-orange-500/20">v2.0</span>
+                    </h1>
+                    <p class="text-slate-500 dark:text-slate-400 text-xs font-medium tracking-wide mt-0.5">Automated Verification System</p>
                 </div>
             </div>
             
             <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" id="theme-btn" class="p-3 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700/80 transition-all duration-200 border border-slate-300/60 dark:border-slate-700/60 shadow-sm active:scale-95" title="Toggle Theme" aria-label="Toggle Theme">
-                    <span class="hidden dark:inline-block text-amber-400">
-                        <i data-lucide="sun" class="w-5 h-5"></i>
-                    </span>
-                    <span class="inline-block dark:hidden text-slate-700">
-                        <i data-lucide="moon" class="w-5 h-5"></i>
-                    </span>
+                <button onclick="toggleTheme()" id="theme-btn" class="p-2.5 rounded-xl bg-white/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 backdrop-blur-sm" title="Toggle Theme">
+                    <span class="hidden dark:block"><i data-lucide="sun" class="w-5 h-5"></i></span>
+                    <span class="block dark:hidden"><i data-lucide="moon" class="w-5 h-5"></i></span>
                 </button>
 
-                <button onclick="triggerManualLogin()" id="run-btn" class="group relative px-5 py-2.5 bg-slate-900 dark:bg-slate-800/90 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-sm font-medium rounded-xl transition-all duration-300 border border-slate-800 dark:border-slate-700/80 hover:border-orange-500/50 flex items-center gap-2 overflow-hidden shadow-lg shadow-slate-900/10 active:scale-95">
-                    <span class="relative z-10 flex items-center gap-2">
-                        <i data-lucide="zap" class="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform"></i>
-                        Run Manual Sync
-                    </span>
-                    <div class="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/15 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                <button onclick="triggerManualLogin()" id="run-btn" class="group relative px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/20 dark:hover:shadow-white/20 active:scale-95 overflow-hidden flex items-center gap-2">
+                    <i data-lucide="zap" class="w-4 h-4 fill-current"></i>
+                    <span>Run Sync</span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                 </button>
             </div>
         </header>
 
         <!-- Main Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            <!-- Left Column: Stats & Step Captures -->
-            <div class="lg:col-span-2 space-y-6">
+            <!-- Left Column (Stats & Preview) -->
+            <div class="lg:col-span-8 space-y-6">
                 
-                <!-- Streak Card -->
-                <div class="glass-panel rounded-3xl p-8 relative overflow-hidden group">
-                    <div class="absolute -right-6 -bottom-6 opacity-5 dark:opacity-10 group-hover:opacity-15 transition-opacity duration-500 pointer-events-none">
-                        <i data-lucide="flame" class="w-48 h-48 text-orange-500"></i>
-                    </div>
+                <!-- Hero Stats Card -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 relative overflow-hidden">
+                    <!-- Decorative BG Elements -->
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
                     
-                    <div class="relative z-10 flex flex-col items-center justify-center text-center">
-                        <span class="text-slate-500 dark:text-slate-400 uppercase tracking-widest text-xs font-bold mb-3">Current Streak</span>
-                        <div class="flex items-baseline gap-2">
-                            <span id="streak-val" class="text-7xl md:text-8xl font-extrabold streak-font bg-clip-text text-transparent bg-gradient-to-b from-orange-400 via-orange-500 to-red-600 glow-text tracking-tight">--</span>
-                            <span class="text-xl font-semibold text-orange-500/90">days</span>
+                    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div class="text-center md:text-left">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-4">
+                                <div class="status-dot bg-emerald-500 text-emerald-500"></div>
+                                <span id="system-status-text">System Operational</span>
+                            </div>
+                            <h2 class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-widest mb-1">Current Streak</h2>
+                            <div class="flex items-baseline justify-center md:justify-start gap-2">
+                                <span id="streak-val" class="text-7xl md:text-8xl font-display font-extrabold streak-number tabular-nums tracking-tighter">--</span>
+                                <span class="text-xl font-medium text-slate-400 dark:text-slate-500">days</span>
+                            </div>
                         </div>
-                        <div id="system-status-badge" class="mt-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20 shadow-sm">
-                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                            <span id="system-status-text">Syncing System...</span>
+
+                        <div class="hidden md:flex flex-col items-end gap-2 text-right">
+                            <div class="text-xs text-slate-400 font-mono">LAST SYNC</div>
+                            <div id="last-updated-hero" class="text-sm font-semibold text-slate-700 dark:text-slate-200 font-mono">--:--</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Dashboard Preview & Multi-Step Flow -->
-                <div class="glass-panel rounded-3xl overflow-hidden">
-                    <div class="bg-slate-100/80 dark:bg-slate-900/80 px-5 py-3 border-b border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between">
-                        <div class="flex items-center gap-2.5">
+                <!-- Interactive Preview Window -->
+                <div class="glass-card rounded-3xl overflow-hidden flex flex-col h-[500px]">
+                    <!-- Browser Toolbar -->
+                    <div class="bg-slate-100/80 dark:bg-slate-900/80 px-4 py-3 border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between backdrop-blur-md">
+                        <div class="flex items-center gap-3">
                             <div class="flex gap-1.5">
-                                <div class="w-3 h-3 rounded-full bg-red-500/30 border border-red-500/60"></div>
-                                <div class="w-3 h-3 rounded-full bg-amber-500/30 border border-amber-500/60"></div>
-                                <div class="w-3 h-3 rounded-full bg-emerald-500/30 border border-emerald-500/60"></div>
+                                <div class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40"></div>
+                                <div class="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40"></div>
+                                <div class="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/40"></div>
                             </div>
-                            <span id="frame-url-label" class="ml-2 text-xs text-slate-500 dark:text-slate-400 font-mono tracking-tight truncate max-w-[280px] sm:max-w-none">
-                                dashboard.interschoolscoding.com/home/dashboard/student
-                            </span>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <div class="flex bg-slate-200/60 dark:bg-slate-800/60 p-1 rounded-xl text-xs">
-                                <button id="btn-mode-iframe" onclick="setViewMode('iframe')" class="px-2.5 py-1 rounded-lg font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm transition-all flex items-center gap-1">
+                            <div class="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
+                            <div class="flex bg-slate-200/50 dark:bg-slate-800/50 rounded-lg p-0.5 text-xs font-medium">
+                                <button id="btn-mode-iframe" onclick="setViewMode('iframe')" class="px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm">
                                     <i data-lucide="globe" class="w-3.5 h-3.5"></i> Live
                                 </button>
-                                <button id="btn-mode-img" onclick="setViewMode('img')" class="px-2.5 py-1 rounded-lg font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center gap-1">
-                                    <i data-lucide="camera" class="w-3.5 h-3.5"></i> Captures
+                                <button id="btn-mode-img" onclick="setViewMode('img')" class="px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
+                                    <i data-lucide="image" class="w-3.5 h-3.5"></i> Captures
                                 </button>
                             </div>
+                        </div>
 
-                            <button onclick="reloadPreview()" title="Reload Preview" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                <i data-lucide="rotate-cw" class="w-4 h-4 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"></i>
+                        <div class="flex items-center gap-1">
+                            <button onclick="reloadPreview()" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors" title="Refresh">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                             </button>
-                            <button onclick="openImageModal()" title="Expand view" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                <i data-lucide="maximize-2" class="w-4 h-4 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"></i>
+                            <button onclick="openImageModal()" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors" title="Expand">
+                                <i data-lucide="maximize-2" class="w-4 h-4"></i>
                             </button>
                         </div>
                     </div>
 
-                    <div class="relative img-container bg-slate-200/50 dark:bg-slate-950/50 aspect-video flex items-center justify-center">
-                        <div id="img-loader" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-slate-100 dark:bg-slate-900/90 transition-opacity duration-300 pointer-events-none">
-                            <div class="loader-ring mb-3"></div>
-                            <span class="text-xs text-slate-500 font-medium">Loading target dashboard...</span>
+                    <!-- Content Area -->
+                    <div class="relative flex-1 bg-slate-50 dark:bg-slate-950 img-zoom-container">
+                        <!-- Loader -->
+                        <div id="img-loader" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 transition-opacity duration-300">
+                            <div class="loader-ring mb-4"></div>
+                            <span class="text-xs text-slate-500 font-medium animate-pulse">Establishing connection...</span>
                         </div>
 
-                        <!-- Live Interactive Frame -->
+                        <!-- Iframe -->
                         <iframe id="live-iframe" 
                                 src="https://dashboard.interschoolscoding.com/home/dashboard/student" 
-                                class="w-full h-full border-0 relative z-10" 
+                                class="w-full h-full border-0 relative z-10 bg-white" 
                                 onload="handleIframeLoad()" 
                                 onerror="handleIframeError()"></iframe>
 
-                        <!-- Final Success Screen Screenshot -->
+                        <!-- Image Preview -->
                         <img id="dashboard-preview" 
                              src="" 
-                             alt="Student Dashboard Capture" 
+                             alt="Dashboard Capture" 
                              class="hidden w-full h-full object-cover object-top img-zoom opacity-0 transition-opacity duration-500 relative z-10 cursor-pointer"
-                             onclick="openImageModal()"
-                             onload="handleImageLoad(this)"
-                             onerror="handleImageError(this)">
+                             onclick="openImageModal()">
                     </div>
 
-                    <!-- Step Captures Timeline Bar -->
-                    <div id="steps-timeline" class="p-4 bg-slate-100/50 dark:bg-slate-900/50 border-t border-slate-200/60 dark:border-slate-800/80">
-                        <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <i data-lucide="layers" class="w-4 h-4 text-orange-500"></i> Execution Sequence Captures (4 Steps)
+                    <!-- Timeline Footer -->
+                    <div class="bg-slate-100/50 dark:bg-slate-900/50 border-t border-slate-200/50 dark:border-slate-800/50 p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <i data-lucide="git-commit-horizontal" class="w-3 h-3"></i> Execution Steps
+                            </span>
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div class="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 aspect-video cursor-pointer" onclick="switchStepPreview('step_1.png', 'Step 1: Login Page')">
-                                <img id="thumb-step-1" src="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80 group-hover:opacity-100">
-                                <span class="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-md">1. Portal Load</span>
+                        <div class="grid grid-cols-4 gap-3">
+                            <!-- Step 1 -->
+                            <div class="group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-colors" onclick="switchStepPreview('step_1.png', 'Step 1: Portal Load')">
+                                <img id="thumb-step-1" src="" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
+                                    <span class="text-[9px] text-white font-medium">01. Init</span>
+                                </div>
                             </div>
-                            <div class="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 aspect-video cursor-pointer" onclick="switchStepPreview('step_2.png', 'Step 2: Credentials Entered')">
-                                <img id="thumb-step-2" src="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80 group-hover:opacity-100">
-                                <span class="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-md">2. Credentials</span>
+                            <!-- Step 2 -->
+                            <div class="group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-colors" onclick="switchStepPreview('step_2.png', 'Step 2: Credentials')">
+                                <img id="thumb-step-2" src="" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
+                                    <span class="text-[9px] text-white font-medium">02. Auth</span>
+                                </div>
                             </div>
-                            <div class="group relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 aspect-video cursor-pointer" onclick="switchStepPreview('step_3.png', 'Step 3: Submission')">
-                                <img id="thumb-step-3" src="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80 group-hover:opacity-100">
-                                <span class="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-md">3. Auth Submit</span>
+                            <!-- Step 3 -->
+                            <div class="group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-colors" onclick="switchStepPreview('step_3.png', 'Step 3: Submit')">
+                                <img id="thumb-step-3" src="" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
+                                    <span class="text-[9px] text-white font-medium">03. Post</span>
+                                </div>
                             </div>
-                            <div class="group relative rounded-xl overflow-hidden border border-orange-500/50 bg-slate-950 aspect-video cursor-pointer ring-1 ring-orange-500/30" onclick="switchStepPreview('dashboard.png', 'Step 4: Student Dashboard Success')">
-                                <img id="thumb-step-4" src="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100">
-                                <span class="absolute bottom-1.5 left-1.5 bg-orange-600/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">4. Student Dashboard</span>
+                            <!-- Step 4 -->
+                            <div class="group relative aspect-video rounded-lg overflow-hidden border border-orange-500/30 bg-slate-900 cursor-pointer ring-1 ring-orange-500/20" onclick="switchStepPreview('dashboard.png', 'Step 4: Success')">
+                                <img id="thumb-step-4" src="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity">
+                                <div class="absolute inset-0 bg-gradient-to-t from-orange-900/90 to-transparent flex items-end p-2">
+                                    <span class="text-[9px] text-white font-bold">04. Done</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Logs -->
-            <div class="lg:col-span-1">
-                <div class="glass-panel rounded-3xl h-full flex flex-col max-h-[600px] overflow-hidden">
-                    <div class="p-5 border-b border-slate-200/60 dark:border-slate-800/80 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/40">
-                        <h2 class="font-semibold text-base flex items-center gap-2.5 text-slate-900 dark:text-white">
-                            <i data-lucide="scroll-text" class="w-4 h-4 text-blue-500 dark:text-blue-400"></i>
-                            Execution Logs
+            <!-- Right Column (Logs) -->
+            <div class="lg:col-span-4 h-full">
+                <div class="glass-card rounded-3xl h-[600px] lg:h-[calc(100%-0px)] flex flex-col overflow-hidden">
+                    <div class="p-5 border-b border-slate-200/50 dark:border-slate-800/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
+                        <h2 class="font-display font-semibold text-base flex items-center gap-2 text-slate-900 dark:text-white">
+                            <i data-lucide="terminal" class="w-4 h-4 text-blue-500"></i>
+                            System Logs
                         </h2>
-                        <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500" id="last-updated">Updated just now</span>
+                        <span class="flex h-2 w-2 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                        </span>
                     </div>
                     
-                    <div class="flex-1 overflow-y-auto p-4 space-y-2.5" id="log-container">
+                    <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar" id="log-container">
+                        <!-- Empty State / Loading -->
                         <div class="flex flex-col items-center justify-center h-48 text-slate-400">
                             <div class="loader-ring mb-3"></div>
-                            <span class="text-xs font-medium">Syncing history...</span>
+                            <span class="text-xs font-medium">Fetching telemetry...</span>
                         </div>
                     </div>
                 </div>
@@ -290,38 +351,41 @@
 
         </div>
         
-        <footer class="mt-12 text-center text-slate-400 dark:text-slate-600 text-xs font-medium">
-            <p>&copy; Delish Byarugaba Auto-Streak Keeper | Holbey.</p>
+        <footer class="mt-16 border-t border-slate-200 dark:border-slate-800 pt-8 text-center">
+            <p class="text-slate-400 dark:text-slate-600 text-xs font-medium">
+                &copy; <span id="year"></span> Delish Byarugaba Auto-Streak Keeper. Designed for reliability.
+            </p>
         </footer>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 ease-out z-50 pointer-events-none">
-        <div class="bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-700/80 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3.5">
-            <div class="p-2 bg-blue-500/10 rounded-xl text-blue-400 border border-blue-500/20">
+    <div id="toast" class="fixed bottom-8 right-8 transform translate-y-24 opacity-0 transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) z-50 pointer-events-none">
+        <div class="bg-slate-900/90 dark:bg-white/90 backdrop-blur-xl border border-slate-700/50 dark:border-slate-200/50 text-white dark:text-slate-900 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4">
+            <div class="p-2 bg-blue-500/20 rounded-full text-blue-400 dark:text-blue-600">
                 <i data-lucide="info" class="w-5 h-5"></i>
             </div>
-            <div class="text-xs">
-                <p id="toast-title" class="font-bold text-sm text-slate-100">Workflow Triggered</p>
-                <p id="toast-sub" class="text-slate-400">Check GitHub Actions for progress.</p>
+            <div>
+                <p id="toast-title" class="font-bold text-sm">Workflow Triggered</p>
+                <p id="toast-sub" class="text-xs opacity-70">Check GitHub Actions for progress.</p>
             </div>
         </div>
     </div>
 
-    <!-- Image Lightbox Modal -->
-    <div id="img-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4" onclick="closeImageModal()">
-        <div class="relative max-w-5xl w-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl" onclick="event.stopPropagation()">
-            <div class="p-4 bg-slate-100/80 dark:bg-slate-800/80 flex justify-between items-center border-b border-slate-200/60 dark:border-slate-800">
-                <span id="modal-title" class="text-xs text-slate-600 dark:text-slate-300 font-mono">Live Capture Preview</span>
-                <button onclick="closeImageModal()" class="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <!-- Lightbox Modal -->
+    <div id="img-modal" class="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-xl hidden items-center justify-center p-4 transition-opacity duration-300" onclick="closeImageModal()">
+        <div class="relative max-w-6xl w-full bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl transform transition-all scale-95 opacity-0" id="modal-content" onclick="event.stopPropagation()">
+            <div class="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+                <span id="modal-title" class="text-sm text-slate-300 font-mono">Live Capture Preview</span>
+                <button onclick="closeImageModal()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div class="bg-slate-950 p-2 flex items-center justify-center">
-                <img id="modal-img" src="" class="w-full h-auto max-h-[80vh] object-contain rounded-xl">
+            <div class="p-2 bg-black flex items-center justify-center min-h-[400px]">
+                <img id="modal-img" src="" class="max-w-full max-h-[80vh] object-contain rounded shadow-2xl">
             </div>
         </div>
     </div>
 
     <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
         const TARGET_STUDENT_URL = "https://dashboard.interschoolscoding.com/home/dashboard/student";
         let activeViewMode = 'iframe';
 
@@ -357,13 +421,15 @@
             if (mode === 'iframe') {
                 img.classList.add('hidden');
                 iframe.classList.remove('hidden');
-                btnIframe.className = "px-2.5 py-1 rounded-lg font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm transition-all flex items-center gap-1";
-                btnImg.className = "px-2.5 py-1 rounded-lg font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center gap-1";
+                // Active State Styles
+                btnIframe.className = "px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm";
+                btnImg.className = "px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200";
             } else {
                 iframe.classList.add('hidden');
                 img.classList.remove('hidden');
-                btnImg.className = "px-2.5 py-1 rounded-lg font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm transition-all flex items-center gap-1";
-                btnIframe.className = "px-2.5 py-1 rounded-lg font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center gap-1";
+                // Active State Styles
+                btnImg.className = "px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm";
+                btnIframe.className = "px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200";
                 
                 if (!img.src || img.src === window.location.href) {
                     img.src = 'dashboard.png?t=' + new Date().getTime();
@@ -416,21 +482,20 @@
         async function fetchLogs() {
             const logContainer = document.getElementById('log-container');
             const streakEl = document.getElementById('streak-val');
-            const statusBadge = document.getElementById('system-status-badge');
-            const lastUpdatedEl = document.getElementById('last-updated');
+            const statusText = document.getElementById('system-status-text');
+            const lastUpdatedHero = document.getElementById('last-updated-hero');
             
             try {
                 const response = await fetch('logs.json?t=' + new Date().getTime());
                 const data = await response.json();
 
                 if(data.streak !== undefined) {
-                    animateValue(streakEl, parseInt(streakEl.innerText) || 0, data.streak, 1000);
+                    animateValue(streakEl, parseInt(streakEl.innerText) || 0, data.streak, 1200);
                 } else {
                     streakEl.innerText = "0";
                 }
 
                 loadStepThumbnails();
-
                 logContainer.innerHTML = '';
                 
                 if (!data.history || data.history.length === 0) {
@@ -439,12 +504,16 @@
                 }
 
                 const latestRun = data.history[0];
-                if (latestRun.passed !== false) {
-                    statusBadge.className = "mt-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20 shadow-sm";
-                    statusBadge.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i><span>System Active</span>`;
+                const isSystemActive = latestRun.passed !== false;
+                
+                if (isSystemActive) {
+                    statusText.innerText = "System Operational";
+                    statusText.parentElement.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-4";
+                    statusText.previousElementSibling.className = "status-dot bg-emerald-500 text-emerald-500";
                 } else {
-                    statusBadge.className = "mt-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-500/10 px-4 py-1.5 rounded-full border border-red-500/20 shadow-sm";
-                    statusBadge.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4"></i><span>Last Check Failed</span>`;
+                    statusText.innerText = "Attention Required";
+                    statusText.parentElement.className = "inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold uppercase tracking-wider mb-4";
+                    statusText.previousElementSibling.className = "status-dot bg-red-500 text-red-500";
                 }
 
                 data.history.forEach((entry, index) => {
@@ -455,55 +524,44 @@
                     const item = document.createElement('div');
                     const isPassed = entry.passed !== false;
                     
-                    item.className = `p-3.5 rounded-2xl border transition-all duration-300 hover:scale-[1.01] ${
+                    item.className = `p-4 rounded-xl border transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
                         isPassed 
-                            ? 'border-slate-200/80 dark:border-slate-800/80 bg-slate-100/40 dark:bg-slate-800/30' 
-                            : 'border-red-500/20 dark:border-red-900/30 bg-red-500/5 dark:bg-red-950/20'
+                            ? 'border-slate-200/60 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40' 
+                            : 'border-red-500/20 bg-red-50/50 dark:bg-red-950/20'
                     }`;
-                    item.style.opacity = '0';
-                    item.style.transform = 'translateY(10px)';
                     
                     const icon = isPassed ? 'check-circle-2' : 'alert-circle';
-                    const colorClass = isPassed ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400';
+                    const colorClass = isPassed ? 'text-emerald-500' : 'text-red-500';
+                    const bgClass = isPassed ? 'bg-emerald-500/10' : 'bg-red-500/10';
                     
                     item.innerHTML = `
-                        <div class="flex justify-between items-start gap-2">
-                            <div class="flex gap-3 items-start">
-                                <div class="mt-0.5 p-1 rounded-lg ${isPassed ? 'bg-emerald-500/10' : 'bg-red-500/10'}">
+                        <div class="flex justify-between items-start">
+                            <div class="flex gap-3">
+                                <div class="mt-0.5 p-1.5 rounded-lg ${bgClass} shrink-0">
                                     <i data-lucide="${icon}" class="w-4 h-4 ${colorClass}"></i>
                                 </div>
                                 <div>
-                                    <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">${entry.status}</div>
-                                    <div class="text-[11px] text-slate-400 mt-0.5">${dateStr} • ${timeStr}</div>
+                                    <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-tight">${entry.status}</div>
+                                    <div class="text-[11px] text-slate-500 mt-1 font-mono">${dateStr} • ${timeStr}</div>
                                 </div>
                             </div>
-                            <span class="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-md ${
-                                isPassed 
-                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
-                                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-                            }">
-                                ${isPassed ? 'PASSED' : 'FAILED'}
-                            </span>
                         </div>
                     `;
                     
                     logContainer.appendChild(item);
 
-                    gsap.to(item, {
-                        opacity: 1,
-                        y: 0,
-                        duration: 0.4,
-                        delay: index * 0.03,
-                        ease: "power2.out"
-                    });
+                    gsap.fromTo(item, 
+                        { opacity: 0, x: 10 },
+                        { opacity: 1, x: 0, duration: 0.4, delay: index * 0.05, ease: "power2.out" }
+                    );
                 });
 
-                lastUpdatedEl.innerText = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                lastUpdatedHero.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 lucide.createIcons();
 
             } catch (err) {
                 console.error(err);
-                logContainer.innerHTML = `<div class="text-red-500 dark:text-red-400 text-center py-6 text-xs font-medium">Error loading logs.</div>`;
+                logContainer.innerHTML = `<div class="text-red-500 text-center py-6 text-xs font-medium">Error loading telemetry.</div>`;
                 streakEl.innerText = "-";
             }
         }
@@ -522,8 +580,8 @@
                 const loader = document.getElementById('img-loader');
                 loader.innerHTML = `
                     <div class="text-center p-4">
-                        <i data-lucide="image-off" class="w-7 h-7 text-slate-400 mx-auto mb-2 opacity-60"></i>
-                        <span class="text-xs text-slate-400 font-medium">Capture Pending / Unavailable</span>
+                        <i data-lucide="image-off" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i>
+                        <span class="text-xs text-slate-500 font-medium">Capture Unavailable</span>
                     </div>
                 `;
                 lucide.createIcons();
@@ -536,7 +594,9 @@
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                // Ease out quart
+                const easeProgress = 1 - Math.pow(1 - progress, 4);
+                obj.innerHTML = Math.floor(easeProgress * (end - start) + start);
                 if (progress < 1) {
                     window.requestAnimationFrame(step);
                 }
@@ -545,7 +605,6 @@
         }
 
         async function triggerManualLogin() {
-            // Retrieve token from browser storage or prompt if missing
             let GITHUB_TOKEN = localStorage.getItem("GH_PAT");
 
             if (!GITHUB_TOKEN) {
@@ -556,18 +615,16 @@
 
             const OWNER = "holdae2oo8";
             const REPO = "my-streak-bot";
-            const WORKFLOW_ID = "daily_login.yml"; // Matches workflow 'name'
+            const WORKFLOW_ID = "daily_login.yml";
             const REF = "main";
 
             const btn = document.getElementById('run-btn');
             const originalContent = btn.innerHTML;
 
             btn.disabled = true;
-            btn.innerHTML = `<div class="loader-ring w-4 h-4 border-white/30 border-t-white"></div> <span class="ml-2">Triggering...</span>`;
+            btn.innerHTML = `<div class="loader-ring w-4 h-4 border-white/30 border-t-white"></div> <span class="ml-2">Syncing...</span>`;
             
             const toast = document.getElementById('toast');
-            const toastTitle = document.getElementById('toast-title');
-            const toastSub = document.getElementById('toast-sub');
 
             try {
                 const response = await fetch(
@@ -584,11 +641,9 @@
                 );
 
                 if (response.status === 204) {
-                    toastTitle.innerText = "Workflow Triggered!";
-                    toastSub.innerText = "Check your Actions tab for execution details.";
-                    toast.classList.remove('translate-y-20', 'opacity-0');
-                    
-                    // Refresh logs after 6 seconds
+                    document.getElementById('toast-title').innerText = "Workflow Triggered!";
+                    document.getElementById('toast-sub').innerText = "Check your Actions tab for execution details.";
+                    toast.classList.remove('translate-y-24', 'opacity-0');
                     setTimeout(fetchLogs, 6000);
                 } else if (response.status === 401) {
                     alert("Invalid Token. Clearing saved token—please click button again and re-enter.");
@@ -606,21 +661,35 @@
                 lucide.createIcons();
                 
                 setTimeout(() => {
-                    toast.classList.add('translate-y-20', 'opacity-0');
+                    toast.classList.add('translate-y-24', 'opacity-0');
                 }, 4000);
             }
         }
 
         function openImageModal() {
             const modal = document.getElementById('img-modal');
+            const content = document.getElementById('modal-content');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            
+            // Small delay for display:flex to apply before animating opacity
+            requestAnimationFrame(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            });
         }
 
         function closeImageModal() {
             const modal = document.getElementById('img-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            const content = document.getElementById('modal-content');
+            
+            content.classList.add('scale-95', 'opacity-0');
+            content.classList.remove('scale-100', 'opacity-100');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
