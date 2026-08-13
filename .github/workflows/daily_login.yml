@@ -10,9 +10,14 @@ jobs:
   run-streak-bot:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write # Grants explicit permission for GitHub Actions to push commits
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches full history so rebase works cleanly
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -37,9 +42,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Stage all generated PNG images and logs safely
-          git add *.png logs.json
+          # Pull latest changes from remote to prevent push conflicts
+          git pull origin main --rebase || true
           
-          # Commit only if there are staged changes
+          # Stage all generated captures and log files
+          git add step_*.png dashboard.png logs.json
+          
+          # Commit and push only if there are actual changes
           git diff --staged --quiet || git commit -m "chore: update daily screenshots and logs [skip ci]"
-          git push
+          git push origin main
