@@ -78,9 +78,11 @@ async def run_bot():
             # STEP 1: Login Page Loaded
             # ----------------------------------------------------
             print("Step 1: Navigating to login page...")
-            await page.goto(LOGIN_URL, wait_until="networkidle", timeout=60000)
+            await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
             await page.wait_for_selector("input[placeholder='Enter username']", timeout=15000)
             
+            # Wait 3 seconds for initial animations & styles
+            await page.wait_for_timeout(3000)
             await page.screenshot(path="step_1.png")
             steps_taken.append({"step": 1, "label": "Login Page Loaded", "file": "step_1.png"})
 
@@ -97,9 +99,8 @@ async def run_bot():
             await pass_field.click()
             await pass_field.fill(password)
 
-            # Pause so typed input values remain visually visible in the input boxes for the screenshot
-            await page.wait_for_timeout(1000)
-
+            # Wait 3 seconds so typed input values remain visually visible
+            await page.wait_for_timeout(3000)
             await page.screenshot(path="step_2.png")
             steps_taken.append({"step": 2, "label": "Credentials Entered", "file": "step_2.png"})
 
@@ -109,13 +110,8 @@ async def run_bot():
             print("Step 3: Submitting login & capturing authentication state...")
             await page.click("button:has-text('Sign in')")
             
-            # Wait for authentication request response or toast notification
-            try:
-                await page.wait_for_response(lambda res: "login" in res.url or "auth" in res.url, timeout=8000)
-            except Exception:
-                await page.wait_for_timeout(2000)
-
-            await page.wait_for_timeout(1500)
+            # Wait 3 seconds for response, auth cookies & toast notifications
+            await page.wait_for_timeout(3000)
             await page.screenshot(path="step_3.png")
             steps_taken.append({"step": 3, "label": "Authentication Submitted", "file": "step_3.png"})
 
@@ -124,13 +120,12 @@ async def run_bot():
             # ----------------------------------------------------
             print("Step 4: Navigating to Student Dashboard...")
             try:
-                await page.goto(TARGET_URL, wait_until="networkidle", timeout=30000)
-            except Exception:
                 await page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=30000)
+            except Exception:
+                pass
 
-            # Allow internal React widgets/charts to render completely
-            await page.wait_for_timeout(4000)
-
+            # Wait 3 seconds for React components/widgets on dashboard to load
+            await page.wait_for_timeout(3000)
             await page.screenshot(path="dashboard.png")
             steps_taken.append({"step": 4, "label": "Student Dashboard", "file": "dashboard.png"})
 
