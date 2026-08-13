@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mission Control | Streak Dashboard</title>
+    <link rel="icon" type="image/icon" href="./favicon.jpg">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -160,6 +161,23 @@
         .img-zoom-container { overflow: hidden; }
         .img-zoom { transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
         .img-zoom-container:hover .img-zoom { transform: scale(1.03); }
+        
+        /* Navigation Button Hover Effects */
+        .nav-btn {
+            transition: all 0.2s ease;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background-color: rgba(249, 115, 22, 0.1);
+            color: #f97316;
+            transform: scale(1.1);
+        }
+        .nav-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="antialiased selection:bg-orange-500/30 selection:text-orange-200 font-sans">
@@ -179,7 +197,7 @@
                 <div>
                     <h1 class="text-2xl font-display font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                         Mission Control
-                        <span class="px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-bold uppercase tracking-wider border border-orange-500/20">v2.0</span>
+                        <span class="px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-bold uppercase tracking-wider border border-orange-500/20">v2.1</span>
                     </h1>
                     <p class="text-slate-500 dark:text-slate-400 text-xs font-medium tracking-wide mt-0.5">Automated Verification System</p>
                 </div>
@@ -231,7 +249,7 @@
                 </div>
 
                 <!-- Interactive Preview Window -->
-                <div class="glass-card rounded-3xl overflow-hidden flex flex-col h-[500px]">
+                <div class="glass-card rounded-3xl overflow-hidden flex flex-col h-[600px] lg:h-[700px]">
                     <!-- Browser Toolbar -->
                     <div class="bg-slate-100/80 dark:bg-slate-900/80 px-4 py-3 border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between backdrop-blur-md">
                         <div class="flex items-center gap-3">
@@ -261,8 +279,30 @@
                         </div>
                     </div>
 
-                    <!-- Content Area -->
-                    <div class="relative flex-1 bg-slate-50 dark:bg-slate-950 img-zoom-container">
+                    <!-- Content Area with Navigation Overlay -->
+                    <div class="relative flex-1 bg-slate-50 dark:bg-slate-950 img-zoom-container group">
+                        
+                        <!-- Navigation Controls (Visible in Capture Mode) -->
+                        <div id="capture-nav-controls" class="absolute inset-0 z-20 pointer-events-none hidden">
+                            <!-- Left Arrow -->
+                            <button onclick="navigateStep(-1)" id="nav-prev" class="nav-btn pointer-events-auto absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 backdrop-blur-md text-white border border-white/10 shadow-xl">
+                                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                            </button>
+                            
+                            <!-- Right Arrow -->
+                            <button onclick="navigateStep(1)" id="nav-next" class="nav-btn pointer-events-auto absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/40 backdrop-blur-md text-white border border-white/10 shadow-xl">
+                                <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                            </button>
+
+                            <!-- Step Indicator Dots -->
+                            <div class="pointer-events-auto absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                                <div id="dot-0" class="w-2 h-2 rounded-full bg-white/30 transition-all duration-300"></div>
+                                <div id="dot-1" class="w-2 h-2 rounded-full bg-white/30 transition-all duration-300"></div>
+                                <div id="dot-2" class="w-2 h-2 rounded-full bg-white/30 transition-all duration-300"></div>
+                                <div id="dot-3" class="w-2 h-2 rounded-full bg-white/30 transition-all duration-300"></div>
+                            </div>
+                        </div>
+
                         <!-- Loader -->
                         <div id="img-loader" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 transition-opacity duration-300">
                             <div class="loader-ring mb-4"></div>
@@ -280,7 +320,7 @@
                         <img id="dashboard-preview" 
                              src="" 
                              alt="Dashboard Capture" 
-                             class="hidden w-full h-full object-cover object-top img-zoom opacity-0 transition-opacity duration-500 relative z-10 cursor-pointer"
+                             class="hidden w-full h-full object-cover object-top img-zoom opacity-0 transition-opacity duration-500 relative z-10 cursor-pointer select-none"
                              onclick="openImageModal()">
                     </div>
 
@@ -290,34 +330,35 @@
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                                 <i data-lucide="git-commit-horizontal" class="w-3 h-3"></i> Execution Steps
                             </span>
+                            <span id="current-step-label" class="text-[10px] font-mono text-orange-500 font-bold">SELECT A STEP</span>
                         </div>
                         <div class="grid grid-cols-4 gap-3">
                             <!-- Step 1 -->
-                            <div class="group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-colors" onclick="switchStepPreview('step_1.png', 'Step 1: Portal Load')">
+                            <div class="step-thumb group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-all duration-300" onclick="switchStepByIndex(0)">
                                 <img id="thumb-step-1" src="" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
                                     <span class="text-[9px] text-white font-medium">01. Init</span>
                                 </div>
                             </div>
                             <!-- Step 2 -->
-                            <div class="group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-colors" onclick="switchStepPreview('step_2.png', 'Step 2: Credentials')">
+                            <div class="step-thumb group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-all duration-300" onclick="switchStepByIndex(1)">
                                 <img id="thumb-step-2" src="" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
                                     <span class="text-[9px] text-white font-medium">02. Auth</span>
                                 </div>
                             </div>
                             <!-- Step 3 -->
-                            <div class="group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-colors" onclick="switchStepPreview('step_3.png', 'Step 3: Submit')">
+                            <div class="step-thumb group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-all duration-300" onclick="switchStepByIndex(2)">
                                 <img id="thumb-step-3" src="" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
                                     <span class="text-[9px] text-white font-medium">03. Post</span>
                                 </div>
                             </div>
                             <!-- Step 4 -->
-                            <div class="group relative aspect-video rounded-lg overflow-hidden border border-orange-500/30 bg-slate-900 cursor-pointer ring-1 ring-orange-500/20" onclick="switchStepPreview('dashboard.png', 'Step 4: Success')">
-                                <img id="thumb-step-4" src="" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity">
-                                <div class="absolute inset-0 bg-gradient-to-t from-orange-900/90 to-transparent flex items-end p-2">
-                                    <span class="text-[9px] text-white font-bold">04. Done</span>
+                            <div class="step-thumb group relative aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 cursor-pointer hover:border-orange-500/50 transition-all duration-300" onclick="switchStepByIndex(3)">
+                                <img id="thumb-step-4" src="" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
+                                    <span class="text-[9px] text-white font-medium">04. Done</span>
                                 </div>
                             </div>
                         </div>
@@ -388,6 +429,15 @@
         document.getElementById('year').textContent = new Date().getFullYear();
         const TARGET_STUDENT_URL = "https://dashboard.interschoolscoding.com/home/dashboard/student";
         let activeViewMode = 'iframe';
+        
+        // Step Management
+        const STEPS = [
+            { file: 'step_1.png', label: 'Step 1: Portal Load' },
+            { file: 'step_2.png', label: 'Step 2: Credentials' },
+            { file: 'step_3.png', label: 'Step 3: Submission' },
+            { file: 'dashboard.png', label: 'Step 4: Success Dashboard' }
+        ];
+        let currentStepIndex = 3; // Default to last step
 
         lucide.createIcons();
 
@@ -417,34 +467,84 @@
             const img = document.getElementById('dashboard-preview');
             const btnIframe = document.getElementById('btn-mode-iframe');
             const btnImg = document.getElementById('btn-mode-img');
+            const navControls = document.getElementById('capture-nav-controls');
 
             if (mode === 'iframe') {
                 img.classList.add('hidden');
                 iframe.classList.remove('hidden');
-                // Active State Styles
+                navControls.classList.add('hidden');
+                
                 btnIframe.className = "px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm";
                 btnImg.className = "px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200";
             } else {
                 iframe.classList.add('hidden');
                 img.classList.remove('hidden');
-                // Active State Styles
+                navControls.classList.remove('hidden');
+                
                 btnImg.className = "px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm";
                 btnIframe.className = "px-3 py-1 rounded-md transition-all flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200";
                 
-                if (!img.src || img.src === window.location.href) {
-                    img.src = 'dashboard.png?t=' + new Date().getTime();
-                }
+                // Load current step if switching to img mode
+                loadStepImage(currentStepIndex);
+                updateNavUI();
             }
             lucide.createIcons();
         }
 
-        function switchStepPreview(filename, label) {
+        function switchStepByIndex(index) {
+            currentStepIndex = index;
             setViewMode('img');
-            const cacheBuster = filename + '?t=' + new Date().getTime();
+        }
+
+        function navigateStep(direction) {
+            const newIndex = currentStepIndex + direction;
+            if (newIndex >= 0 && newIndex < STEPS.length) {
+                currentStepIndex = newIndex;
+                loadStepImage(currentStepIndex);
+                updateNavUI();
+            }
+        }
+
+        function loadStepImage(index) {
+            const step = STEPS[index];
+            const cacheBuster = step.file + '?t=' + new Date().getTime();
             const img = document.getElementById('dashboard-preview');
+            
+            // Fade out effect could be added here, but simple src swap is faster
             img.src = cacheBuster;
             document.getElementById('modal-img').src = cacheBuster;
-            document.getElementById('modal-title').innerText = label;
+            document.getElementById('modal-title').innerText = step.label;
+            document.getElementById('current-step-label').innerText = step.label.toUpperCase();
+        }
+
+        function updateNavUI() {
+            // Update Arrows
+            document.getElementById('nav-prev').disabled = (currentStepIndex === 0);
+            document.getElementById('nav-next').disabled = (currentStepIndex === STEPS.length - 1);
+
+            // Update Dots
+            for(let i=0; i<STEPS.length; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if(i === currentStepIndex) {
+                    dot.className = "w-4 h-2 rounded-full bg-orange-500 transition-all duration-300";
+                } else {
+                    dot.className = "w-2 h-2 rounded-full bg-white/30 transition-all duration-300";
+                }
+            }
+
+            // Highlight Thumbnail
+            const thumbs = document.querySelectorAll('.step-thumb');
+            thumbs.forEach((thumb, idx) => {
+                if(idx === currentStepIndex) {
+                    thumb.classList.add('ring-2', 'ring-orange-500', 'border-transparent');
+                    thumb.querySelector('img').classList.remove('opacity-60');
+                    thumb.querySelector('img').classList.add('opacity-100');
+                } else {
+                    thumb.classList.remove('ring-2', 'ring-orange-500', 'border-transparent');
+                    thumb.querySelector('img').classList.add('opacity-60');
+                    thumb.querySelector('img').classList.remove('opacity-100');
+                }
+            });
         }
 
         function reloadPreview() {
@@ -456,7 +556,7 @@
             if (activeViewMode === 'iframe') {
                 document.getElementById('live-iframe').src = TARGET_STUDENT_URL + '?t=' + t;
             } else {
-                document.getElementById('dashboard-preview').src = 'dashboard.png?t=' + t;
+                loadStepImage(currentStepIndex);
             }
             loadStepThumbnails();
         }
@@ -594,7 +694,6 @@
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                // Ease out quart
                 const easeProgress = 1 - Math.pow(1 - progress, 4);
                 obj.innerHTML = Math.floor(easeProgress * (end - start) + start);
                 if (progress < 1) {
@@ -672,7 +771,6 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             
-            // Small delay for display:flex to apply before animating opacity
             requestAnimationFrame(() => {
                 content.classList.remove('scale-95', 'opacity-0');
                 content.classList.add('scale-100', 'opacity-100');
@@ -692,10 +790,20 @@
             }, 300);
         }
 
+        // Keyboard Navigation Support
+        document.addEventListener('keydown', (e) => {
+            if (activeViewMode === 'img') {
+                if (e.key === 'ArrowLeft') navigateStep(-1);
+                if (e.key === 'ArrowRight') navigateStep(1);
+            }
+            if (e.key === 'Escape') closeImageModal();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             fetchLogs();
             setInterval(fetchLogs, 30000);
+            updateNavUI(); // Initialize UI state
         });
     </script>
 </body>
