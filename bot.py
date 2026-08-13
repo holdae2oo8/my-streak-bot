@@ -28,10 +28,14 @@ def record_log(passed, status_message, steps_captured):
             with open(LOG_FILE, "r") as f:
                 data = json.load(f)
         except Exception:
-            pass
+            # Resets if logs.json is corrupted (e.g. HTML 503 response body accidentally written to it)
+            data = {"streak": 0, "history": []}
 
+    # Explicitly increment or reset streak
     if passed:
         data["streak"] = data.get("streak", 0) + 1
+    else:
+        data["streak"] = 0
 
     current_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     new_entry = {
@@ -41,7 +45,7 @@ def record_log(passed, status_message, steps_captured):
         "steps": steps_captured
     }
 
-    if "history" not in data:
+    if "history" not in data or not isinstance(data["history"], list):
         data["history"] = []
     
     data["history"].insert(0, new_entry)
@@ -78,10 +82,25 @@ async def run_bot():
             # STEP 1: Login Page Loaded
             # ----------------------------------------------------
             print("Step 1: Navigating to login page...")
-            await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
+            response = None
+            
+            # Retry up to 3 times in case of temporary 503 / network limits
+            for attempt in range(3):
+                try:
+                    response = await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
+                    if response and response.status < 400:
+                        break
+                except Exception as e:
+                    if attempt == 2:
+                        raise e
+                print(f"Attempt {attempt + 1} failed or returned error. Retrying in 5 seconds...")
+                await asyncio.sleep(5)
+
+            if response and response.status >= 400:
+                raise Exception(f"Server returned HTTP Status {response.status} ({response.status_text})")
+
             await page.wait_for_selector("input[placeholder='Enter username']", timeout=15000)
             
-            # Wait 3 seconds for initial animations & styles
             await page.wait_for_timeout(3000)
             await page.screenshot(path="step_1.png")
             steps_taken.append({"step": 1, "label": "Login Page Loaded", "file": "step_1.png"})
@@ -99,7 +118,6 @@ async def run_bot():
             await pass_field.click()
             await pass_field.fill(password)
 
-            # Wait 3 seconds so typed input values remain visually visible
             await page.wait_for_timeout(3000)
             await page.screenshot(path="step_2.png")
             steps_taken.append({"step": 2, "label": "Credentials Entered", "file": "step_2.png"})
@@ -110,7 +128,6 @@ async def run_bot():
             print("Step 3: Submitting login & capturing authentication state...")
             await page.click("button:has-text('Sign in')")
             
-            # Wait 3 seconds for response, auth cookies & toast notifications
             await page.wait_for_timeout(3000)
             await page.screenshot(path="step_3.png")
             steps_taken.append({"step": 3, "label": "Authentication Submitted", "file": "step_3.png"})
@@ -124,7 +141,6 @@ async def run_bot():
             except Exception:
                 pass
 
-            # Wait 3 seconds for React components/widgets on dashboard to load
             await page.wait_for_timeout(3000)
             await page.screenshot(path="dashboard.png")
             steps_taken.append({"step": 4, "label": "Student Dashboard", "file": "dashboard.png"})
