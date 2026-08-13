@@ -59,9 +59,8 @@ async def run_bot():
     
     steps_taken = []
 
-    # Verify secrets exist before launching browser
     if not username or not password:
-        err_msg = "Execution failed: BOT_USERNAME or BOT_PASSWORD secrets are missing or empty in GitHub Repository Settings."
+        err_msg = "Execution failed: BOT_USERNAME or BOT_PASSWORD environment variables are missing."
         print(err_msg)
         record_log(False, err_msg, steps_taken)
         return
@@ -76,60 +75,62 @@ async def run_bot():
 
         try:
             # ----------------------------------------------------
-            # STEP 1: Login Page
+            # STEP 1: Login Page Loaded
             # ----------------------------------------------------
             print("Step 1: Navigating to login page...")
-            await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
+            await page.goto(LOGIN_URL, wait_until="networkidle", timeout=60000)
             await page.wait_for_selector("input[placeholder='Enter username']", timeout=15000)
+            
             await page.screenshot(path="step_1.png")
-            steps_taken.append({"step": 1, "label": "Login Page", "file": "step_1.png"})
+            steps_taken.append({"step": 1, "label": "Login Page Loaded", "file": "step_1.png"})
 
             # ----------------------------------------------------
-            # STEP 2: Input Credentials Safely
+            # STEP 2: Input Credentials
             # ----------------------------------------------------
             print("Step 2: Entering login credentials...")
-            
             user_field = page.locator("input[placeholder='Enter username']")
             pass_field = page.locator("input[placeholder='Enter your password']")
 
-            # Focus and fill explicitly
             await user_field.click()
             await user_field.fill(username)
             
             await pass_field.click()
             await pass_field.fill(password)
 
-            # Wait briefly to ensure form state registers inputs
+            # Pause so typed input values remain visually visible in the input boxes for the screenshot
             await page.wait_for_timeout(1000)
 
             await page.screenshot(path="step_2.png")
             steps_taken.append({"step": 2, "label": "Credentials Entered", "file": "step_2.png"})
 
             # ----------------------------------------------------
-            # STEP 3: Click Sign In & Capture Notification
+            # STEP 3: Submit Authentication
             # ----------------------------------------------------
-            print("Step 3: Submitting login & capturing success notification...")
+            print("Step 3: Submitting login & capturing authentication state...")
             await page.click("button:has-text('Sign in')")
             
+            # Wait for authentication request response or toast notification
             try:
-                await page.wait_for_selector("text=Login successful", timeout=10000)
+                await page.wait_for_response(lambda res: "login" in res.url or "auth" in res.url, timeout=8000)
             except Exception:
                 await page.wait_for_timeout(2000)
-                
+
+            await page.wait_for_timeout(1500)
             await page.screenshot(path="step_3.png")
-            steps_taken.append({"step": 3, "label": "Successful Login Notification", "file": "step_3.png"})
+            steps_taken.append({"step": 3, "label": "Authentication Submitted", "file": "step_3.png"})
 
             # ----------------------------------------------------
-            # STEP 4: Dashboard Navigation & Final Capture
+            # STEP 4: Student Dashboard
             # ----------------------------------------------------
-            print("Step 4: Waiting for Student Dashboard...")
+            print("Step 4: Navigating to Student Dashboard...")
             try:
-                await page.wait_for_url("**/dashboard/**", timeout=20000)
+                await page.goto(TARGET_URL, wait_until="networkidle", timeout=30000)
             except Exception:
-                print(f"Redirect pause detected. Directly navigating to {TARGET_URL}...")
                 await page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=30000)
 
-            await page.wait_for_timeout(3000)
+            # Allow internal React widgets/charts to render completely
+            await page.wait_for_timeout(4000)
+
             await page.screenshot(path="dashboard.png")
             steps_taken.append({"step": 4, "label": "Student Dashboard", "file": "dashboard.png"})
 
