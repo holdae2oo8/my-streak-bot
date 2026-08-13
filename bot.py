@@ -59,12 +59,18 @@ async def run_bot():
     
     steps_taken = []
 
+    # Verify secrets exist before launching browser
+    if not username or not password:
+        err_msg = "Execution failed: BOT_USERNAME or BOT_PASSWORD secrets are missing or empty in GitHub Repository Settings."
+        print(err_msg)
+        record_log(False, err_msg, steps_taken)
+        return
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(viewport={"width": 1440, "height": 900})
         page = await context.new_page()
         
-        # Set generous default timeouts
         page.set_default_navigation_timeout(60000)
         page.set_default_timeout(60000)
 
@@ -74,20 +80,33 @@ async def run_bot():
             # ----------------------------------------------------
             print("Step 1: Navigating to login page...")
             await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
+            await page.wait_for_selector("input[placeholder='Enter username']", timeout=15000)
             await page.screenshot(path="step_1.png")
             steps_taken.append({"step": 1, "label": "Login Page", "file": "step_1.png"})
 
             # ----------------------------------------------------
-            # STEP 2: Input Credentials
+            # STEP 2: Input Credentials Safely
             # ----------------------------------------------------
             print("Step 2: Entering login credentials...")
-            await page.fill("input[placeholder='Enter username']", username, timeout=60000)
-            await page.fill("input[placeholder='Enter your password']", password, timeout=60000)
+            
+            user_field = page.locator("input[placeholder='Enter username']")
+            pass_field = page.locator("input[placeholder='Enter your password']")
+
+            # Focus and fill explicitly
+            await user_field.click()
+            await user_field.fill(username)
+            
+            await pass_field.click()
+            await pass_field.fill(password)
+
+            # Wait briefly to ensure form state registers inputs
+            await page.wait_for_timeout(1000)
+
             await page.screenshot(path="step_2.png")
             steps_taken.append({"step": 2, "label": "Credentials Entered", "file": "step_2.png"})
 
             # ----------------------------------------------------
-            # STEP 3: Click Sign In & Capture Toast Notification
+            # STEP 3: Click Sign In & Capture Notification
             # ----------------------------------------------------
             print("Step 3: Submitting login & capturing success notification...")
             await page.click("button:has-text('Sign in')")
@@ -101,18 +120,16 @@ async def run_bot():
             steps_taken.append({"step": 3, "label": "Successful Login Notification", "file": "step_3.png"})
 
             # ----------------------------------------------------
-            # STEP 4: Fallback Navigation & Dashboard Capture
+            # STEP 4: Dashboard Navigation & Final Capture
             # ----------------------------------------------------
             print("Step 4: Waiting for Student Dashboard...")
             try:
-                # First try waiting for auto-redirect
                 await page.wait_for_url("**/dashboard/**", timeout=20000)
             except Exception:
-                # If auto-redirect hangs, directly navigate to target URL
-                print(f"Auto-redirect timed out. Forcing direct navigation to {TARGET_URL}...")
+                print(f"Redirect pause detected. Directly navigating to {TARGET_URL}...")
                 await page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=30000)
 
-            await page.wait_for_timeout(3000)  # Short pause to render UI components
+            await page.wait_for_timeout(3000)
             await page.screenshot(path="dashboard.png")
             steps_taken.append({"step": 4, "label": "Student Dashboard", "file": "dashboard.png"})
 
