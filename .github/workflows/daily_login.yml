@@ -32,6 +32,7 @@ jobs:
         run: python bot.py
 
       - name: Commit and Push Updated Captures & Logs
+        if: always() # Ensures logs and screenshots push even if bot.py fails
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
