@@ -1,62 +1,62 @@
-name: Daily Login Automation
+name: Daily Streak Keeper
 
 on:
   schedule:
-    # Runs daily at 06:00 UTC
-    - cron: '0 6 * * *'
-  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+    # Runs automatically every day at 00:00 UTC (Adjust if needed)
+    - cron: '0 0 * * *'
+  # Allows triggering manually via your Mission Control dashboard button
+  workflow_dispatch:
+
+# Ensure the workflow has write permissions to commit updated logs back to the repository
+permissions:
+  contents: write
 
 jobs:
-  run-streak-bot:
+  keep-streak:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write # Grants explicit permission for GitHub Actions to push commits
-
     steps:
-      - name: Check out repository
+      # 1. Checkout the repository code
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetches full history so rebase works cleanly
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # 2. Set up Node.js environment (Change to Python/etc. if your bot uses another runtime)
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.10'
+          node-version: '20'
+          cache: 'npm' # Speeds up workflow runs if package-lock.json exists
 
+      # 3. Install dependencies
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install playwright
-          playwright install chromium --with-deps
+        run: npm ci || npm install
 
-      - name: Execute Login & Capture Script
+      # 4. Install Playwright / Puppeteer browsers (Required if using headless browser automation)
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+        continue-on-error: true # Safe fallback if not using Playwright
+
+      # 5. Run your main automated login script
+      - name: Run Streak Bot Script
         env:
-          BOT_USERNAME: ${{ secrets.BOT_USERNAME }}
-          BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
-        run: python bot.py
+          # Pass any secret credentials required for your script
+          STUDENT_USERNAME: ${{ secrets.STUDENT_USERNAME }}
+          STUDENT_PASSWORD: ${{ secrets.STUDENT_PASSWORD }}
+        run: node index.js
 
-      - name: Commit and Push Updated Captures & Logs
-        if: always() # Ensures logs and screenshots push even if bot.py fails
+      # 6. Automatically commit and push logs & screenshot updates
+      - name: Commit and Push Log Updates
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Pull latest changes from remote to prevent push conflicts
-          git pull origin main --rebase || true
-          
-          # Stage all generated captures and log files
-          git add step_*.png dashboard.png logs.json
-          
-          # Commit and push only if there are actual changes
-          git diff --staged --quiet || git commit -m "chore: update daily screenshots and logs [skip ci]"
-          git push origin main
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Upload Logs & Screenshots as Artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: daily-run-artifacts
-          path: |
-            *.png
-            logs.json
+          # Stage updated log file and step screenshot previews
+          git add logs.json step_1.png step_2.png step_3.png dashboard.png
+
+          # Only commit if actual file changes exist
+          if git diff --staged --quiet; then
+            echo "No changes detected in logs or screenshot captures."
+          else
+            git commit -m "chore(auto): update streak logs and captures [skip ci]"
+            git push
+          fi
