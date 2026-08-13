@@ -28,10 +28,9 @@ def record_log(passed, status_message, steps_captured):
             with open(LOG_FILE, "r") as f:
                 data = json.load(f)
         except Exception:
-            # Resets if logs.json is corrupted (e.g. HTML 503 response body accidentally written to it)
+            # Fallback if logs.json contains corrupted data (e.g. HTML 503 content)
             data = {"streak": 0, "history": []}
 
-    # Explicitly increment or reset streak
     if passed:
         data["streak"] = data.get("streak", 0) + 1
     else:
@@ -45,7 +44,7 @@ def record_log(passed, status_message, steps_captured):
         "steps": steps_captured
     }
 
-    if "history" not in data or not isinstance(data["history"], list):
+    if "history" not in data or not isinstance(data.get("history"), list):
         data["history"] = []
     
     data["history"].insert(0, new_entry)
@@ -82,26 +81,13 @@ async def run_bot():
             # STEP 1: Login Page Loaded
             # ----------------------------------------------------
             print("Step 1: Navigating to login page...")
-            response = None
+            await page.goto(LOGIN_URL, wait_until="networkidle", timeout=60000)
             
-            # Retry up to 3 times in case of temporary 503 / network limits
-            for attempt in range(3):
-                try:
-                    response = await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
-                    if response and response.status < 400:
-                        break
-                except Exception as e:
-                    if attempt == 2:
-                        raise e
-                print(f"Attempt {attempt + 1} failed or returned error. Retrying in 5 seconds...")
-                await asyncio.sleep(5)
-
-            if response and response.status >= 400:
-                raise Exception(f"Server returned HTTP Status {response.status} ({response.status_text})")
-
-            await page.wait_for_selector("input[placeholder='Enter username']", timeout=15000)
+            # Ensure input selector exists and is visible before continuing
+            user_field = page.locator("input[placeholder='Enter username']")
+            await user_field.wait_for(state="visible", timeout=15000)
             
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(2000)
             await page.screenshot(path="step_1.png")
             steps_taken.append({"step": 1, "label": "Login Page Loaded", "file": "step_1.png"})
 
@@ -109,7 +95,6 @@ async def run_bot():
             # STEP 2: Input Credentials
             # ----------------------------------------------------
             print("Step 2: Entering login credentials...")
-            user_field = page.locator("input[placeholder='Enter username']")
             pass_field = page.locator("input[placeholder='Enter your password']")
 
             await user_field.click()
@@ -118,7 +103,7 @@ async def run_bot():
             await pass_field.click()
             await pass_field.fill(password)
 
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(2000)
             await page.screenshot(path="step_2.png")
             steps_taken.append({"step": 2, "label": "Credentials Entered", "file": "step_2.png"})
 
@@ -137,7 +122,7 @@ async def run_bot():
             # ----------------------------------------------------
             print("Step 4: Navigating to Student Dashboard...")
             try:
-                await page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=30000)
+                await page.goto(TARGET_URL, wait_until="networkidle", timeout=30000)
             except Exception:
                 pass
 
