@@ -53,7 +53,7 @@ jobs:
           git push origin main
 
       - name: Upload Logs & Screenshots as Artifacts
-        if: always() # Uploads output files regardless of script pass/fail
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: daily-run-artifacts
