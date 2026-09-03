@@ -1,0 +1,22 @@
+{
+  "project": "My Streak Bot",
+  "version": "3.0",
+  "generated_at": null,
+  "workflow": {
+    "name": null,
+    "run_id": null,
+    "run_number": null,
+    "run_attempt": null,
+    "event": null,
+    "commit": null
+  },
+  "streak": 0,
+  "stats": {
+    "total_runs": 0,
+    "successful_runs": 0,
+    "failed_runs": 0,
+    "success_rate": 0
+  },
+  "last_run": null,
+  "history": []
+}
