@@ -846,8 +846,18 @@
                 <span>Actions</span>
             </a>
 
-            <a
+            <button
                 class="action-btn action-primary"
+                id="runSyncButton"
+                type="button"
+                title="Trigger GitHub Actions workflow"
+            >
+                <i data-lucide="play" width="15"></i>
+                <span>Run Sync</span>
+            </button>
+
+            <a
+                class="action-btn"
                 href="https://dashboard.interschoolscoding.com/home/dashboard/student"
                 target="_blank"
                 rel="noopener"
@@ -1186,7 +1196,7 @@
         <div class="footer-left">
             <span class="live-dot"></span>
             <span>
-                STREAKOS ONLINE · AUTO REFRESH 30S
+                STREAKOS ONLINE · DATA.JSON · AUTO REFRESH 30S
             </span>
         </div>
 
@@ -1349,6 +1359,16 @@
     }
 
 
+    function createIconsSafe() {
+        if (window.lucide && typeof window.lucide.createIcons === "function") {
+            try {
+                window.lucide.createIcons();
+            } catch (error) {
+                console.warn("Icon rendering skipped:", error);
+            }
+        }
+    }
+
     function updateThemeIcon() {
 
         const icon = $("themeIcon");
@@ -1364,7 +1384,7 @@
                 : "moon"
         );
 
-        lucide.createIcons();
+        createIconsSafe();
     }
 
 
@@ -1431,115 +1451,107 @@
     ------------------------------------------------------- */
 
     async function loadData() {
-
         try {
+            const dataUrl = new URL(DATA_FILE, document.baseURI);
+            dataUrl.searchParams.set("v", Date.now());
 
-            const response =
-                await fetch(
-                    `${DATA_FILE}?v=${Date.now()}`,
-                    {
-                        cache: "no-store"
-                    }
-                );
+            const response = await fetch(dataUrl.href, {
+                cache: "no-store",
+                credentials: "same-origin",
+                headers: { "Accept": "application/json" }
+            });
 
             if (!response.ok) {
-                throw new Error(
-                    `HTTP ${response.status}`
-                );
+                throw new Error(`data.json HTTP ${response.status}`);
             }
 
-            dashboardData =
-                await response.json();
+            const json = await response.json();
 
+            if (!json || typeof json !== "object") {
+                throw new Error("data.json returned invalid JSON");
+            }
+
+            dashboardData = normalizeData(json);
             renderDashboard();
 
         } catch (error) {
+            console.error("Primary data load failed:", error);
 
-            console.error(
-                "data.json failed:",
-                error
-            );
-
-            // Fallback to logs.json
+            // Fallback only if data.json cannot be loaded.
             try {
+                const logsUrl = new URL("logs.json", document.baseURI);
+                logsUrl.searchParams.set("v", Date.now());
 
-                const response =
-                    await fetch(
-                        `logs.json?v=${Date.now()}`,
-                        {
-                            cache: "no-store"
-                        }
-                    );
+                const response = await fetch(logsUrl.href, {
+                    cache: "no-store",
+                    credentials: "same-origin",
+                    headers: { "Accept": "application/json" }
+                });
 
                 if (!response.ok) {
-                    throw new Error(
-                        "logs.json unavailable"
-                    );
+                    throw new Error(`logs.json HTTP ${response.status}`);
                 }
 
-                const logs =
-                    await response.json();
-
-                dashboardData = {
+                const logs = await response.json();
+                dashboardData = normalizeData({
                     project: "My Streak Bot",
                     version: "fallback",
                     generated_at: null,
-
                     workflow: {},
-
-                    streak:
-                        logs.streak || 0,
-
-                    stats: {
-                        total_runs:
-                            logs.history?.length || 0,
-
-                        successful_runs:
-                            logs.history?.filter(
-                                x => x.passed === true
-                            ).length || 0,
-
-                        failed_runs:
-                            logs.history?.filter(
-                                x => x.passed === false
-                            ).length || 0,
-
-                        success_rate: 0
-                    },
-
-                    last_run:
-                        logs.history?.[0] || null,
-
-                    history:
-                        logs.history || []
-                };
-
-                const total =
-                    dashboardData.stats.total_runs;
-
-                const successful =
-                    dashboardData.stats.successful_runs;
-
-                dashboardData.stats.success_rate =
-                    total
-                        ? Math.round(
-                            successful / total * 1000
-                          ) / 10
-                        : 0;
+                    streak: Number(logs.streak) || 0,
+                    stats: {},
+                    last_run: Array.isArray(logs.history) ? (logs.history[0] || null) : null,
+                    history: Array.isArray(logs.history) ? logs.history : []
+                });
 
                 renderDashboard();
 
             } catch (fallbackError) {
-
-                console.error(
-                    fallbackError
-                );
-
-                showError();
+                console.error("Fallback data load failed:", fallbackError);
+                showError(`Unable to load telemetry: ${error.message || "unknown error"}`);
             }
         }
     }
 
+    function normalizeData(data) {
+        const history = Array.isArray(data.history) ? data.history : [];
+        const sourceStats = data.stats && typeof data.stats === "object"
+            ? data.stats
+            : {};
+
+        const totalRuns = Number.isFinite(Number(sourceStats.total_runs))
+            ? Number(sourceStats.total_runs)
+            : history.length;
+
+        const successfulRuns = Number.isFinite(Number(sourceStats.successful_runs))
+            ? Number(sourceStats.successful_runs)
+            : history.filter(x => x && x.passed === true).length;
+
+        const failedRuns = Number.isFinite(Number(sourceStats.failed_runs))
+            ? Number(sourceStats.failed_runs)
+            : history.filter(x => x && x.passed === false).length;
+
+        const successRate = Number.isFinite(Number(sourceStats.success_rate))
+            ? Number(sourceStats.success_rate)
+            : (totalRuns
+                ? Math.round((successfulRuns / totalRuns) * 1000) / 10
+                : 0);
+
+        return {
+            ...data,
+            streak: Number(data.streak) || 0,
+            stats: {
+                ...sourceStats,
+                total_runs: totalRuns,
+                successful_runs: successfulRuns,
+                failed_runs: failedRuns,
+                success_rate: successRate
+            },
+            workflow: data.workflow || {},
+            last_run: data.last_run || history[0] || null,
+            history
+        };
+    }
 
     /* -------------------------------------------------------
        RENDER
@@ -1734,7 +1746,7 @@
             });
 
 
-        lucide.createIcons();
+        createIconsSafe();
     }
 
 
@@ -1945,6 +1957,94 @@
         );
 
 
+    /* -------------------------------------------------------
+       MANUAL GITHUB ACTIONS SYNC
+    ------------------------------------------------------- */
+
+    const WORKFLOW_DISPATCH_URL =
+        "https://api.github.com/repos/holdae2oo8/my-streak-bot/actions/workflows/daily_login.yml/dispatches";
+
+    async function triggerManualLogin() {
+        const button = $("runSyncButton");
+
+        let token = sessionStorage.getItem("GH_PAT");
+
+        if (!token) {
+            token = prompt(
+                "Enter a GitHub Personal Access Token with permission to trigger this workflow.\n\nThe token is kept only for this browser tab."
+            );
+
+            if (!token) {
+                showToast("Sync cancelled");
+                return;
+            }
+
+            token = token.trim();
+
+            if (!token) {
+                showToast("No token entered");
+                return;
+            }
+
+            sessionStorage.setItem("GH_PAT", token);
+        }
+
+        button.disabled = true;
+        button.style.opacity = "0.65";
+        button.innerHTML =
+            '<i data-lucide="loader-circle" width="15"></i><span>Starting...</span>';
+        createIconsSafe();
+
+        try {
+            const response = await fetch(WORKFLOW_DISPATCH_URL, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/vnd.github+json",
+                    "Authorization": `Bearer ${token}`,
+                    "X-GitHub-Api-Version": "2022-11-28",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ ref: "main" })
+            });
+
+            if (response.status === 204) {
+                showToast("Sync started — GitHub Actions is running");
+
+                setTimeout(loadData, 15000);
+                setTimeout(loadData, 30000);
+                setTimeout(loadData, 60000);
+
+            } else if (response.status === 401) {
+                sessionStorage.removeItem("GH_PAT");
+                throw new Error("GitHub rejected the token. Please enter a valid token.");
+
+            } else if (response.status === 403) {
+                throw new Error("Token lacks permission to trigger the workflow.");
+
+            } else {
+                const body = await response.text();
+                throw new Error(
+                    `GitHub returned HTTP ${response.status}` +
+                    (body ? `: ${body.slice(0, 160)}` : "")
+                );
+            }
+
+        } catch (error) {
+            console.error("Manual sync failed:", error);
+            showToast(error.message || "Unable to start sync");
+
+        } finally {
+            button.disabled = false;
+            button.style.opacity = "";
+            button.innerHTML =
+                '<i data-lucide="play" width="15"></i><span>Run Sync</span>';
+            createIconsSafe();
+        }
+    }
+
+    $("runSyncButton").addEventListener("click", triggerManualLogin);
+
+
     function showToast(message) {
 
         const toast =
@@ -1995,7 +2095,7 @@
 
     initTheme();
 
-    lucide.createIcons();
+    createIconsSafe();
 
     showCapture(3);
 
